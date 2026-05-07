@@ -3,33 +3,33 @@ import './index.css'
 
 import { Routes, Route, Navigate } from 'react-router-dom'
 
-// Componentes ficticios temporales
+import LoginPage from './pages/auth/LoginPage'
+
 const Inicio = () => <div>Inicio</div>
 const Buscar = () => <div>Buscar Médicos</div>
 const MisTurnos = () => <div>Mis Turnos</div>
 const Agenda = () => <div>Agenda Médico</div>
 
-// Rutas definidas
-const AppRoutes = () => {
+function App() {
+
   return (
+
     <Routes>
+
+      <Route path="/" element={<LoginPage />} />
+
       <Route path="/inicio" element={<Inicio />} />
+
       <Route path="/buscar" element={<Buscar />} />
+
       <Route path="/mis-turnos" element={<MisTurnos />} />
+
       <Route path="/agenda" element={<Agenda />} />
 
-      {/* Ruta por defecto */}
-      <Route path="/" element={<Navigate to="/inicio" />} />
-    </Routes>
-  )
-}
+      <Route path="*" element={<Navigate to="/" />} />
 
-function App() {
-  return (
-    <div className="app-container">
-      <h1>Sistema de Turnos Médicos</h1>
-      <p>Setup del frontend inicializado correctamente.</p>
-    </div>
+    </Routes>
+
   )
 }
 
