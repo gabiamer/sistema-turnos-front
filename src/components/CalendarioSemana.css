@@ -1,0 +1,136 @@
+/* CalendarioSemana.css — Luciana Sprint 1 */
+
+.calendario-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+/* Navegación */
+.cal-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.cal-btn {
+  background: var(--luci-bg, #1e0a14);
+  color: var(--luci-accent, #f06090);
+  border: 1px solid var(--luci-border, #7a2040);
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.cal-btn:hover {
+  background: var(--luci-border, #7a2040);
+}
+
+.cal-semana-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--luci-text, #f7a8c0);
+}
+
+/* Grilla */
+.cal-grid-container {
+  overflow-x: auto;
+}
+
+.cal-grid {
+  display: grid;
+  border-bottom: 1px solid #2a2d3a;
+  min-width: 600px;
+}
+
+/* Encabezados de días */
+.cal-header-cell {
+  padding: 8px 4px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #8b8fa8;
+  border-right: 1px solid #2a2d3a;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: center;
+}
+.cal-dia-nombre { font-size: 11px; }
+.cal-dia-fecha  { font-size: 10px; opacity: 0.65; }
+
+/* Columna de hora */
+.cal-hora-cell {
+  padding: 6px 8px;
+  font-size: 11px;
+  color: #8b8fa8;
+  font-family: monospace;
+  border-right: 1px solid #2a2d3a;
+  display: flex;
+  align-items: center;
+  background: #16181f;
+}
+
+/* Slots */
+.cal-slot {
+  padding: 6px 4px;
+  text-align: center;
+  font-size: 13px;
+  border-right: 1px solid #2a2d3a;
+  cursor: default;
+  transition: filter 0.1s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+}
+.cal-slot-icon { font-size: 11px; }
+
+.cal-slot--libre {
+  background: rgba(52, 212, 154, 0.12);
+  color: #34d49a;
+  cursor: pointer;
+}
+.cal-slot--libre:hover,
+.cal-slot--libre:focus {
+  background: rgba(52, 212, 154, 0.25);
+  outline: none;
+}
+
+.cal-slot--ocupado {
+  background: rgba(100, 100, 120, 0.1);
+  color: #494d62;
+}
+
+.cal-slot--bloqueado {
+  background: rgba(240, 160, 48, 0.1);
+  color: #f0a030;
+}
+
+.cal-slot--vacio {
+  background: transparent;
+}
+
+/* Sin datos */
+.cal-empty {
+  padding: 32px;
+  text-align: center;
+  color: #494d62;
+  font-size: 14px;
+}
+
+/* Leyenda */
+.cal-leyenda {
+  display: flex;
+  gap: 18px;
+  font-size: 11px;
+  flex-wrap: wrap;
+}
+.ley-item { display: flex; align-items: center; gap: 5px; }
+.ley-libre    { color: #34d49a; }
+.ley-ocupado  { color: #494d62; }
+.ley-bloqueado { color: #f0a030; }
