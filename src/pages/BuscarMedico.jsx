@@ -1,14 +1,16 @@
 // src/pages/BuscarMedico.jsx
-import { useState } from 'react'
-import { medicos, especialidades, slots } from '../mocks/mockData'
+import { useState, useEffect } from 'react'
+import { medicos, especialidades } from '../mocks/mockData'
+import { disponibilidadService } from '../services/disponibilidadService'
 import SelectorEspecialidad from '../components/SelectorEspecialidad'
 import ListaMedicos from '../components/ListaMedicos'
 import CalendarioSemana from '../components/CalendarioSemana'
+import MedicosAlternativos from '../components/MedicosAlternativos'
 
 // Devuelve el lunes de la semana a la que pertenece una fecha
 function getLunes(fecha) {
   const d = new Date(fecha)
-  const dia = d.getDay() // 0=dom, 1=lun...
+  const dia = d.getDay()
   const diff = dia === 0 ? -6 : 1 - dia
   d.setDate(d.getDate() + diff)
   d.setHours(0, 0, 0, 0)
@@ -23,21 +25,46 @@ function toISO(fecha) {
 function BuscarMedico() {
   const [especialidadSeleccionada, setEspecialidadSeleccionada] = useState('Todas')
   const [medicoSeleccionado, setMedicoSeleccionado] = useState(null)
-  const [cargando, setCargando] = useState(false)
   const [semanaBase, setSemanaBase] = useState(() => getLunes(new Date()))
+
+  const [slots, setSlots] = useState([])
+  const [cargandoSlots, setCargandoSlots] = useState(false)
+  const [errorSlots, setErrorSlots] = useState('')
 
   const medicosFiltrados = especialidadSeleccionada === 'Todas'
     ? medicos
     : medicos.filter(m => m.especialidad === especialidadSeleccionada)
 
+  // Médicos de la misma especialidad (para MedicosAlternativos)
+  const medicosEspecialidad = medicoSeleccionado
+    ? medicos.filter(m => m.especialidad === medicoSeleccionado.especialidad)
+    : []
+
+  // Cada vez que cambia el médico o la semana → pedir slots al back
+  useEffect(() => {
+    if (!medicoSeleccionado) return
+
+    setCargandoSlots(true)
+    setErrorSlots('')
+    setSlots([])
+
+    disponibilidadService
+      .getSlots(medicoSeleccionado.id, toISO(semanaBase))
+      .then(data => setSlots(data))
+      .catch(err => {
+        if (err.response?.status === 404) {
+          setErrorSlots('sin-agenda') // médico sin agenda configurada
+        } else {
+          setErrorSlots('error-red')
+        }
+      })
+      .finally(() => setCargandoSlots(false))
+
+  }, [medicoSeleccionado, semanaBase])
+
   function handleVerDisponibilidad(medico) {
-    setCargando(true)
-    setMedicoSeleccionado(null)
-    setSemanaBase(getLunes(new Date())) // resetear a semana actual al cambiar médico
-    setTimeout(() => {
-      setMedicoSeleccionado(medico)
-      setCargando(false)
-    }, 700)
+    setMedicoSeleccionado(medico)
+    setSemanaBase(getLunes(new Date())) // resetear a semana actual
   }
 
   function handleSemanaAnterior() {
@@ -56,24 +83,20 @@ function BuscarMedico() {
     })
   }
 
-  // Calcular el domingo de la semana visible
-  const semanaFin = new Date(semanaBase)
-  semanaFin.setDate(semanaFin.getDate() + 6)
-
-  // Filtrar slots del médico que caigan en la semana visible
-  const slotsMedico = medicoSeleccionado
-    ? slots.filter(s => {
-        if (s.medicoId !== medicoSeleccionado.id) return false
-        return s.fecha >= toISO(semanaBase) && s.fecha <= toISO(semanaFin)
-      })
-    : []
-
   function handleSlotClick(slot) {
     alert(`Seleccionaste el slot:\n📅 ${slot.fecha}  🕐 ${slot.hora}\nMédico: ${medicoSeleccionado.nombre} ${medicoSeleccionado.apellido}`)
     // En Sprint 3 esto abrirá el modal de confirmación
   }
 
+  const semanaFin = new Date(semanaBase)
+  semanaFin.setDate(semanaFin.getDate() + 6)
+
   const labelSemana = `${semanaBase.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })} – ${semanaFin.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}`
+
+  // Hay slots libres esta semana?
+  const haySlots = slots.length > 0
+  const sinAgenda = errorSlots === 'sin-agenda'
+  const errorRed = errorSlots === 'error-red'
 
   return (
     <div>
@@ -91,6 +114,8 @@ function BuscarMedico() {
         onCambio={(esp) => {
           setEspecialidadSeleccionada(esp)
           setMedicoSeleccionado(null)
+          setSlots([])
+          setErrorSlots('')
         }}
       />
 
@@ -104,24 +129,8 @@ function BuscarMedico() {
         onVerDisponibilidad={handleVerDisponibilidad}
       />
 
-      {/* Spinner de carga */}
-      {cargando && (
-        <div style={{ textAlign: 'center', marginTop: '2rem', color: '#64748b' }}>
-          <div style={{
-            display: 'inline-block',
-            width: '28px', height: '28px',
-            border: '3px solid #e2e8f0',
-            borderTopColor: '#2563eb',
-            borderRadius: '50%',
-            animation: 'spin 0.7s linear infinite',
-          }} />
-          <p style={{ marginTop: '0.5rem', fontSize: '0.85rem' }}>Cargando disponibilidad...</p>
-          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-        </div>
-      )}
-
-      {/* Paso 3: calendario con navegación de semana */}
-      {medicoSeleccionado && !cargando && (
+      {/* Paso 3: calendario */}
+      {medicoSeleccionado && (
         <div style={{ marginTop: '2rem' }}>
           <h2 style={{ fontSize: '1.1rem', fontWeight: '600', marginBottom: '0.25rem' }}>
             Disponibilidad — Dr/a. {medicoSeleccionado.nombre} {medicoSeleccionado.apellido}
@@ -165,12 +174,71 @@ function BuscarMedico() {
             </button>
           </div>
 
-          <CalendarioSemana slots={slotsMedico} onSlotClick={handleSlotClick} />
+          {/* Spinner */}
+          {cargandoSlots && (
+            <div style={{ textAlign: 'center', marginTop: '1.5rem', color: '#64748b' }}>
+              <div style={{
+                display: 'inline-block',
+                width: '28px', height: '28px',
+                border: '3px solid #e2e8f0',
+                borderTopColor: '#2563eb',
+                borderRadius: '50%',
+                animation: 'spin 0.7s linear infinite',
+              }} />
+              <p style={{ marginTop: '0.5rem', fontSize: '0.85rem' }}>Cargando disponibilidad...</p>
+              <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+            </div>
+          )}
 
-          {slotsMedico.length === 0 && (
+          {/* Error de red */}
+          {!cargandoSlots && errorRed && (
+            <div style={{
+              padding: '1rem',
+              backgroundColor: '#fef2f2',
+              border: '1px solid #fecaca',
+              borderRadius: '10px',
+              color: '#dc2626',
+              fontSize: '0.9rem',
+              marginTop: '0.5rem',
+            }}>
+              ⚠ No se pudo cargar la disponibilidad. Verificá tu conexión e intentá de nuevo.
+            </div>
+          )}
+
+          {/* Médico sin agenda configurada */}
+          {!cargandoSlots && sinAgenda && (
+            <div style={{
+              padding: '1rem',
+              backgroundColor: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              borderRadius: '10px',
+              color: '#64748b',
+              fontSize: '0.9rem',
+              marginTop: '0.5rem',
+            }}>
+              📋 Este médico todavía no tiene agenda configurada.
+            </div>
+          )}
+
+          {/* Sin slots esta semana */}
+          {!cargandoSlots && !errorSlots && !haySlots && (
             <p style={{ color: '#f59e0b', fontSize: '0.9rem', marginTop: '0.5rem' }}>
               ⚠ Sin disponibilidad esta semana.
             </p>
+          )}
+
+          {/* Calendario con slots */}
+          {!cargandoSlots && haySlots && (
+            <CalendarioSemana slots={slots} onSlotClick={handleSlotClick} />
+          )}
+
+          {/* Médicos alternativos: aparece cuando no hay slots (sin agenda o semana vacía) */}
+          {!cargandoSlots && (sinAgenda || !haySlots) && (
+            <MedicosAlternativos
+              medicos={medicosEspecialidad}
+              medicoActualId={medicoSeleccionado.id}
+              onVerDisponibilidad={handleVerDisponibilidad}
+            />
           )}
         </div>
       )}
