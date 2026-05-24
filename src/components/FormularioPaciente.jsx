@@ -1,5 +1,6 @@
 // src/components/FormularioPaciente.jsx
 import { useState } from 'react'
+import { pacienteService } from '../services/pacienteService'
 
 const camposIniciales = {
   ci: '',
@@ -19,6 +20,8 @@ function FormularioPaciente({ onEnviar }) {
   const [form, setForm] = useState(camposIniciales)
   const [errores, setErrores] = useState(erroresIniciales)
   const [enviado, setEnviado] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [errorServidor, setErrorServidor] = useState('')
 
   function validar() {
     const nuevosErrores = { ci: '', email: '' }
@@ -42,19 +45,33 @@ function FormularioPaciente({ onEnviar }) {
   function handleChange(e) {
     const { name, value } = e.target
     setForm(prev => ({ ...prev, [name]: value }))
-    // Limpiar error al escribir
     if (errores[name]) {
       setErrores(prev => ({ ...prev, [name]: '' }))
     }
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
     if (!validar()) return
 
-    console.log('Datos del paciente:', form)
-    setEnviado(true)
-    if (onEnviar) onEnviar(form)
+    setLoading(true)
+    setErrorServidor('')
+
+    try {
+      await pacienteService.registrar(form)
+      setEnviado(true)
+      if (onEnviar) onEnviar(form)
+    } catch (err) {
+      if (err.response?.status === 409) {
+        setErrorServidor('Ya existe un paciente registrado con ese CI.')
+      } else if (err.response?.data?.message) {
+        setErrorServidor(err.response.data.message)
+      } else {
+        setErrorServidor('Error al registrar. Verificá tu conexión e intentá de nuevo.')
+      }
+    } finally {
+      setLoading(false)
+    }
   }
 
   if (enviado) {
@@ -68,7 +85,7 @@ function FormularioPaciente({ onEnviar }) {
       }}>
         <p style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>✅</p>
         <h3 style={{ color: '#16a34a', fontWeight: '600', marginBottom: '0.5rem' }}>
-          Datos registrados
+          Datos registrados correctamente
         </h3>
         <p style={{ color: '#64748b', fontSize: '0.9rem' }}>
           {form.nombre} {form.apellido} — CI: {form.ci}
@@ -107,66 +124,30 @@ function FormularioPaciente({ onEnviar }) {
         Datos del Paciente
       </h2>
 
-      {/* CI */}
-      <Campo
-        label="CI *"
-        name="ci"
-        value={form.ci}
-        onChange={handleChange}
-        placeholder="Ej: 12345678"
-        error={errores.ci}
-      />
+      {/* Error del servidor */}
+      {errorServidor && (
+        <div style={{
+          padding: '0.75rem 1rem',
+          backgroundColor: '#fef2f2',
+          border: '1px solid #fecaca',
+          borderRadius: '8px',
+          color: '#dc2626',
+          fontSize: '0.875rem',
+        }}>
+          ⚠ {errorServidor}
+        </div>
+      )}
 
-      {/* Nombre */}
-      <Campo
-        label="Nombre"
-        name="nombre"
-        value={form.nombre}
-        onChange={handleChange}
-        placeholder="Ej: Pedro"
-      />
-
-      {/* Apellido */}
-      <Campo
-        label="Apellido"
-        name="apellido"
-        value={form.apellido}
-        onChange={handleChange}
-        placeholder="Ej: Suárez"
-      />
-
-      {/* Fecha de nacimiento */}
-      <Campo
-        label="Fecha de nacimiento"
-        name="fechaNacimiento"
-        value={form.fechaNacimiento}
-        onChange={handleChange}
-        type="date"
-      />
-
-      {/* Teléfono */}
-      <Campo
-        label="Teléfono"
-        name="telefono"
-        value={form.telefono}
-        onChange={handleChange}
-        placeholder="Ej: 70012345"
-        type="tel"
-      />
-
-      {/* Email */}
-      <Campo
-        label="Email"
-        name="email"
-        value={form.email}
-        onChange={handleChange}
-        placeholder="Ej: pedro@mail.com"
-        type="email"
-        error={errores.email}
-      />
+      <Campo label="CI *"                name="ci"              value={form.ci}              onChange={handleChange} placeholder="Ej: 12345678"       error={errores.ci} />
+      <Campo label="Nombre"              name="nombre"          value={form.nombre}          onChange={handleChange} placeholder="Ej: Pedro" />
+      <Campo label="Apellido"            name="apellido"        value={form.apellido}        onChange={handleChange} placeholder="Ej: Suárez" />
+      <Campo label="Fecha de nacimiento" name="fechaNacimiento" value={form.fechaNacimiento} onChange={handleChange} type="date" />
+      <Campo label="Teléfono"            name="telefono"        value={form.telefono}        onChange={handleChange} placeholder="Ej: 70012345" type="tel" />
+      <Campo label="Email"               name="email"           value={form.email}           onChange={handleChange} placeholder="Ej: pedro@mail.com" type="email" error={errores.email} />
 
       <button
         type="submit"
+        disabled={loading}
         style={{
           marginTop: '0.5rem',
           backgroundColor: '#2563eb',
@@ -176,23 +157,20 @@ function FormularioPaciente({ onEnviar }) {
           padding: '0.65rem 1rem',
           fontSize: '0.95rem',
           fontWeight: '500',
-          cursor: 'pointer',
+          cursor: loading ? 'not-allowed' : 'pointer',
+          opacity: loading ? 0.7 : 1,
         }}
       >
-        Guardar datos
+        {loading ? 'Guardando...' : 'Guardar datos'}
       </button>
     </form>
   )
 }
 
-// Componente auxiliar para no repetir estilos
 function Campo({ label, name, value, onChange, placeholder, type = 'text', error }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-      <label
-        htmlFor={name}
-        style={{ fontSize: '0.875rem', fontWeight: '500', color: '#374151' }}
-      >
+      <label htmlFor={name} style={{ fontSize: '0.875rem', fontWeight: '500', color: '#374151' }}>
         {label}
       </label>
       <input
@@ -212,9 +190,7 @@ function Campo({ label, name, value, onChange, placeholder, type = 'text', error
           backgroundColor: 'white',
         }}
       />
-      {error && (
-        <span style={{ fontSize: '0.8rem', color: '#ef4444' }}>{error}</span>
-      )}
+      {error && <span style={{ fontSize: '0.8rem', color: '#ef4444' }}>{error}</span>}
     </div>
   )
 }
