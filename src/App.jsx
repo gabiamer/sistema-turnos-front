@@ -19,8 +19,8 @@ function App() {
         <Navbar />
         <main className="app-contenido">
           <Routes>
-            <Route path="/" element={<LoginPage />} />
-            <Route path="/inicio" element={<Inicio />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/" element={<Inicio />} />
             <Route path="/buscar" element={<BuscarMedico />} />
             <Route path="/mis-turnos" element={<MisTurnos />} />
             <Route path="/agenda"    element={<GestionAgendaPage />} />
