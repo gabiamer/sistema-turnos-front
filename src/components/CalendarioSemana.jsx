@@ -1,7 +1,10 @@
 // src/components/CalendarioSemana.jsx
 
 function CalendarioSemana({ slots, onSlotClick }) {
-  if (!slots || slots.length === 0) {
+  // Asegurarse de que slots siempre sea un array
+  const slotsArray = Array.isArray(slots) ? slots : []
+
+  if (slotsArray.length === 0) {
     return (
       <p style={{ color: '#64748b', marginTop: '1rem' }}>
         Sin disponibilidad este período.
@@ -9,7 +12,7 @@ function CalendarioSemana({ slots, onSlotClick }) {
     )
   }
 
-  const porFecha = slots.reduce((acc, slot) => {
+  const porFecha = slotsArray.reduce((acc, slot) => {
     if (!acc[slot.fecha]) acc[slot.fecha] = []
     acc[slot.fecha].push(slot)
     return acc
