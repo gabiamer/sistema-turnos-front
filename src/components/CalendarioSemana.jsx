@@ -1,7 +1,10 @@
 // src/components/CalendarioSemana.jsx
 
 function CalendarioSemana({ slots, onSlotClick }) {
-  if (!slots || slots.length === 0) {
+  // Asegurarse de que slots siempre sea un array
+  const slotsArray = Array.isArray(slots) ? slots : []
+
+  if (slotsArray.length === 0) {
     return (
       <p style={{ color: '#64748b', marginTop: '1rem' }}>
         Sin disponibilidad este período.
@@ -9,8 +12,7 @@ function CalendarioSemana({ slots, onSlotClick }) {
     )
   }
 
-  // Agrupar slots por fecha
-  const porFecha = slots.reduce((acc, slot) => {
+  const porFecha = slotsArray.reduce((acc, slot) => {
     if (!acc[slot.fecha]) acc[slot.fecha] = []
     acc[slot.fecha].push(slot)
     return acc
@@ -27,7 +29,6 @@ function CalendarioSemana({ slots, onSlotClick }) {
       }}>
         {fechas.map(fecha => (
           <div key={fecha}>
-            {/* Encabezado de columna */}
             <div style={{
               backgroundColor: '#1e40af',
               color: 'white',
@@ -42,7 +43,6 @@ function CalendarioSemana({ slots, onSlotClick }) {
               })}
             </div>
 
-            {/* Slots de esa fecha */}
             <div style={{
               display: 'flex',
               flexDirection: 'column',
@@ -57,7 +57,7 @@ function CalendarioSemana({ slots, onSlotClick }) {
                 const ocupado = !slot.disponible
                 const libre = !bloqueado && !ocupado
 
-                let bg = '#22c55e'      // verde = libre
+                let bg = '#22c55e'
                 let color = 'white'
                 let cursor = 'pointer'
                 let title = 'Disponible — click para reservar'
@@ -97,7 +97,6 @@ function CalendarioSemana({ slots, onSlotClick }) {
         ))}
       </div>
 
-      {/* Leyenda */}
       <div style={{ display: 'flex', gap: '1rem', marginTop: '0.75rem', fontSize: '0.78rem', color: '#64748b' }}>
         <span>🟢 Libre</span>
         <span>⬜ Ocupado</span>
