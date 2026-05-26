@@ -52,8 +52,8 @@ function CalendarioSemana({ slots, onSlotClick }) {
               border: '1px solid #e2e8f0',
               borderRadius: '0 0 8px 8px',
             }}>
-              {porFecha[fecha].map(slot => {
-                const bloqueado = slot.bloqueoActivo
+              {porFecha[fecha].map((slot, index) => {
+                const bloqueado = slot.bloqueado
                 const ocupado = !slot.disponible
                 const libre = !bloqueado && !ocupado
 
@@ -70,7 +70,7 @@ function CalendarioSemana({ slots, onSlotClick }) {
 
                 return (
                   <button
-                    key={slot.id}
+                    key={`${fecha}-${index}`}
                     title={title}
                     disabled={!libre}
                     onClick={() => libre && onSlotClick && onSlotClick(slot)}
