@@ -1,8 +1,11 @@
-// src/services/disponibilidadService.js
-import axiosInstance from './axiosInstance'
+// ============================================================
+// disponibilidadService.js — Luciana Sprint 2
+// GET /api/medicos/{id}/disponibilidad?semana=YYYY-MM-DD
+// USAR_MOCK = true  → datos de prueba (no necesita backend)
+// USAR_MOCK = false → endpoint real (cuando Alex lo confirme)
+// ============================================================
 import { generarSlotsMock } from '../data/mockData'
 
-// ← Cambiá a false cuando Alex confirme que el endpoint está arriba
 const USAR_MOCK = true
 
 function getLunesStr(offset = 0) {
@@ -13,21 +16,18 @@ function getLunesStr(offset = 0) {
   return hoy.toISOString().split('T')[0]
 }
 
-export const disponibilidadService = {
+export async function getDisponibilidad(medicoId, semanaOffset = 0) {
+  const semana = getLunesStr(semanaOffset)
 
-  // GET /api/medicos/{id}/disponibilidad?semana=YYYY-MM-DD
-  getSlots: async (medicoId, semanaOffset = 0) => {
-    if (USAR_MOCK) {
-      await new Promise(r => setTimeout(r, 600))
-      const semana = getLunesStr(semanaOffset)
-      const lunes = new Date(semana + 'T12:00:00')
-      return generarSlotsMock(medicoId, lunes)
-    }
-
-    const semana = getLunesStr(semanaOffset)
-    const response = await axiosInstance.get(
-      `/api/medicos/${medicoId}/disponibilidad?semana=${semana}`
-    )
-    return response.data
+  if (USAR_MOCK) {
+    await new Promise(r => setTimeout(r, 600))
+    const lunes = new Date(semana + 'T12:00:00')
+    return generarSlotsMock(medicoId, lunes)
   }
+
+  const res = await fetch(
+    `/api/medicos/${medicoId}/disponibilidad?semana=${semana}`
+  )
+  if (!res.ok) throw new Error(`Error ${res.status}`)
+  return res.json()
 }
