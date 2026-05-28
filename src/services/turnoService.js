@@ -1,11 +1,10 @@
-// src/services/turnoService.js
 import axiosInstance from './axiosInstance'
 
 export const turnoService = {
 
-  // POST /api/turnos/solicitar  → devuelve { turnoId, bloqueoExpira }
-  solicitar: async (medicoId, fecha, hora) => {
+  solicitar: async (pacienteId, medicoId, fecha, hora) => {
     const response = await axiosInstance.post('/api/turnos/solicitar', {
+      pacienteId,
       medicoId,
       fecha,
       hora,
@@ -13,9 +12,13 @@ export const turnoService = {
     return response.data
   },
 
-  // POST /api/turnos/{id}/confirmar
   confirmar: async (turnoId) => {
     const response = await axiosInstance.post(`/api/turnos/${turnoId}/confirmar`)
+    return response.data
+  },
+
+  listar: async (pacienteId) => {
+    const response = await axiosInstance.get(`/api/turnos?pacienteId=${pacienteId}`)
     return response.data
   },
 }
