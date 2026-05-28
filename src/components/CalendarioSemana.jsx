@@ -1,18 +1,26 @@
 // src/components/CalendarioSemana.jsx
+// ============================================================
+// Sprint 1 — feature/luci-s1-calendario
+// Componente puro: recibe slots como prop, no hace fetch
+// Props:
+//   slots       → [{ fecha, hora, disponible, bloqueoActivo }]
+//   onSlotClick → fn(slot) al clickear un slot libre
+// Días: lun–vie (columnas); horas: filas
+// Colores: libre=verde, ocupado=gris, bloqueoActivo=naranja
+// ============================================================
 
-function CalendarioSemana({ slots, onSlotClick }) {
-  // Asegurarse de que slots siempre sea un array
-  const slotsArray = Array.isArray(slots) ? slots : []
+function CalendarioSemana({ slots = [], onSlotClick }) {
 
-  if (slotsArray.length === 0) {
+  if (slots.length === 0) {
     return (
-      <p style={{ color: '#64748b', marginTop: '1rem' }}>
+      <div className="cal-empty">
         Sin disponibilidad este período.
-      </p>
+      </div>
     )
   }
 
-  const porFecha = slotsArray.reduce((acc, slot) => {
+  // ── Agrupar por fecha ────────────────────────────────────────────────────
+  const porFecha = slots.reduce((acc, slot) => {
     if (!acc[slot.fecha]) acc[slot.fecha] = []
     acc[slot.fecha].push(slot)
     return acc
@@ -20,88 +28,116 @@ function CalendarioSemana({ slots, onSlotClick }) {
 
   const fechas = Object.keys(porFecha).sort()
 
+  // ── Horarios únicos (filas) ──────────────────────────────────────────────
+  const horas = [...new Set(slots.map(s => s.hora))].sort()
+
+  // ── Helpers ─────────────────────────────────────────────────────────────
+  function formatearDia(fechaStr) {
+    // '2026-05-04' → 'Lun\n4 may'
+    try {
+      const [a, m, d] = fechaStr.split('-').map(Number)
+      const fecha = new Date(a, m - 1, d)
+      return {
+        nombre: fecha.toLocaleDateString('es-AR', { weekday: 'short' }),
+        dia: fecha.toLocaleDateString('es-AR', { day: 'numeric', month: 'short' }),
+      }
+    } catch {
+      return { nombre: fechaStr, dia: '' }
+    }
+  }
+
+  function clasificarSlot(slot) {
+    // bloqueoActivo tiene prioridad sobre disponible
+    if (slot.bloqueoActivo) return 'bloqueado'
+    if (!slot.disponible)   return 'ocupado'
+    return 'libre'
+  }
+
+  const totalCols = 1 + fechas.length // col hora + una col por fecha
+
   return (
-    <div style={{ marginTop: '1rem', overflowX: 'auto' }}>
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: `repeat(${fechas.length}, minmax(110px, 1fr))`,
-        gap: '0.75rem',
-      }}>
-        {fechas.map(fecha => (
-          <div key={fecha}>
-            <div style={{
-              backgroundColor: '#1e40af',
-              color: 'white',
-              borderRadius: '8px 8px 0 0',
-              padding: '0.4rem 0.5rem',
-              textAlign: 'center',
-              fontSize: '0.78rem',
-              fontWeight: '600',
-            }}>
-              {new Date(fecha + 'T12:00:00').toLocaleDateString('es-ES', {
-                weekday: 'short', day: 'numeric', month: 'short'
-              })}
-            </div>
+    <div className="calendario-wrapper">
 
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '0.3rem',
-              padding: '0.4rem',
-              backgroundColor: '#f8fafc',
-              border: '1px solid #e2e8f0',
-              borderRadius: '0 0 8px 8px',
-            }}>
-              {porFecha[fecha].map((slot, index) => {
-                const bloqueado = slot.bloqueado
-                const ocupado = !slot.disponible
-                const libre = !bloqueado && !ocupado
+      {/* ── Grilla ─────────────────────────────────────────────────────── */}
+      <div className="cal-grid-container">
+        <div
+          className="cal-grid"
+          style={{ gridTemplateColumns: `56px repeat(${fechas.length}, 1fr)` }}
+          role="grid"
+          aria-label="Calendario de disponibilidad"
+        >
 
-                let bg = '#22c55e'
-                let color = 'white'
-                let cursor = 'pointer'
-                let title = 'Disponible — click para reservar'
+          {/* Fila de encabezados */}
+          <div className="cal-header-cell" aria-hidden="true" />   {/* esquina */}
+          {fechas.map(fecha => {
+            const { nombre, dia } = formatearDia(fecha)
+            return (
+              <div key={fecha} className="cal-header-cell" role="columnheader">
+                <span className="cal-dia-nombre">{nombre}</span>
+                <span className="cal-dia-fecha">{dia}</span>
+              </div>
+            )
+          })}
 
-                if (bloqueado) {
-                  bg = '#94a3b8'; cursor = 'not-allowed'; title = 'Bloqueado por el médico'
-                } else if (ocupado) {
-                  bg = '#e2e8f0'; color = '#94a3b8'; cursor = 'not-allowed'; title = 'Ocupado'
+          {/* Filas de horarios */}
+          {horas.map(hora => (
+            <>
+              {/* Celda de hora */}
+              <div key={`h-${hora}`} className="cal-hora-cell" role="rowheader">
+                {hora}
+              </div>
+
+              {/* Celda por fecha */}
+              {fechas.map(fecha => {
+                const slot = porFecha[fecha]?.find(s => s.hora === hora)
+
+                if (!slot) {
+                  return (
+                    <div
+                      key={`${fecha}-${hora}`}
+                      className="cal-slot cal-slot--vacio"
+                      aria-hidden="true"
+                    />
+                  )
                 }
+
+                const tipo = clasificarSlot(slot)
 
                 return (
                   <button
-                    key={`${fecha}-${index}`}
-                    title={title}
-                    disabled={!libre}
-                    onClick={() => libre && onSlotClick && onSlotClick(slot)}
-                    style={{
-                      backgroundColor: bg,
-                      color,
-                      border: 'none',
-                      borderRadius: '6px',
-                      padding: '0.35rem 0.5rem',
-                      fontSize: '0.82rem',
-                      fontWeight: '500',
-                      cursor,
-                      textAlign: 'center',
-                      transition: 'opacity 0.15s',
-                      opacity: libre ? 1 : 0.6,
-                    }}
+                    key={`${fecha}-${hora}`}
+                    className={`cal-slot cal-slot--${tipo}`}
+                    disabled={tipo !== 'libre'}
+                    onClick={() => tipo === 'libre' && onSlotClick?.(slot)}
+                    title={
+                      tipo === 'libre'     ? `Disponible — ${fecha} ${hora}` :
+                      tipo === 'bloqueado' ? 'Bloqueado por el médico' :
+                                            'Ocupado'
+                    }
+                    aria-label={
+                      tipo === 'libre'
+                        ? `Reservar turno el ${fecha} a las ${hora}`
+                        : `${hora} — ${tipo}`
+                    }
                   >
-                    {slot.hora}
+                    <span className="cal-slot-icon">
+                      {tipo === 'libre' ? '●' : tipo === 'bloqueado' ? '◐' : '○'}
+                    </span>
                   </button>
                 )
               })}
-            </div>
-          </div>
-        ))}
+            </>
+          ))}
+        </div>
       </div>
 
-      <div style={{ display: 'flex', gap: '1rem', marginTop: '0.75rem', fontSize: '0.78rem', color: '#64748b' }}>
-        <span>🟢 Libre</span>
-        <span>⬜ Ocupado</span>
-        <span>🔘 Bloqueado</span>
+      {/* ── Leyenda ─────────────────────────────────────────────────────── */}
+      <div className="cal-leyenda" aria-label="Referencias del calendario">
+        <span className="ley-item ley-libre">    ● Libre</span>
+        <span className="ley-item ley-ocupado">  ○ Ocupado</span>
+        <span className="ley-item ley-bloqueado">◐ Bloqueado</span>
       </div>
+
     </div>
   )
 }

@@ -1,33 +1,55 @@
-// src/services/disponibilidadService.js
 import axiosInstance from './axiosInstance'
-import { generarSlotsMock } from '../data/mockData'
 
-// ← Cambiá a false cuando Alex confirme que el endpoint está arriba
-const USAR_MOCK = true
 
-function getLunesStr(offset = 0) {
+const USAR_MOCK = false
+
+// Devuelve lunes según offset
+function getLunesDesdeOffset(offset = 0) {
   const hoy = new Date()
   const dia = hoy.getDay()
   const diff = dia === 0 ? -6 : 1 - dia
+
   hoy.setDate(hoy.getDate() + diff + offset * 7)
+
   return hoy.toISOString().split('T')[0]
+}
+
+// Acepta:
+// getSlots(1, 0)
+// getSlots(1, '2026-05-26')
+function resolverSemana(semanaArg) {
+
+  // Adri manda string ISO
+  if (
+    typeof semanaArg === 'string' &&
+    /^\d{4}-\d{2}-\d{2}$/.test(semanaArg)
+  ) {
+    return semanaArg
+  }
+
+  // CalendarioPage manda offset
+  return getLunesDesdeOffset(Number(semanaArg) || 0)
 }
 
 export const disponibilidadService = {
 
-  // GET /api/medicos/{id}/disponibilidad?semana=YYYY-MM-DD
-  getSlots: async (medicoId, semanaOffset = 0) => {
-    if (USAR_MOCK) {
-      await new Promise(r => setTimeout(r, 600))
-      const semana = getLunesStr(semanaOffset)
-      const lunes = new Date(semana + 'T12:00:00')
-      return generarSlotsMock(medicoId, lunes)
-    }
+  getSlots: async (medicoId, semanaArg = 0) => {
 
-    const semana = getLunesStr(semanaOffset)
+    const semana = resolverSemana(semanaArg)
+
+    // SOLO backend real
     const response = await axiosInstance.get(
-      `/api/medicos/${medicoId}/disponibilidad?semana=${semana}`
+      `/api/medicos/${medicoId}/disponibilidad`,
+      {
+        params: { semana }
+      }
     )
-    return response.data
-  }
+
+    // backend puede devolver:
+    // { slots: [...] }
+    // o directamente [...]
+    return Array.isArray(response.data)
+      ? response.data
+      : response.data.slots ?? []
+  },
 }

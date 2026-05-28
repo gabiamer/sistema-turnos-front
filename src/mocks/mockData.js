@@ -1,61 +1,78 @@
-// src/mocks/mockData.js
+// src/data/mockData.js
+// ============================================================
+// Sprint 1 — feature/luci-s1-calendario
+// Estructura real según contratos de API definidos con Ana y Alex
+// Cuando lleguen los endpoints reales, SOLO se cambia la fuente de datos,
+// NO los componentes.
+// ============================================================
 
-export const especialidades = [
-  'Todas',
+// GET /api/medicos  →  [{ id, nombre, apellido, especialidad, email }]
+export const mockMedicos = [
+  { id: 1, nombre: 'Carlos',  apellido: 'Romero',   especialidad: 'Cardiología',     email: 'cromero@clinica.com'   },
+  { id: 2, nombre: 'Valeria', apellido: 'Pinto',    especialidad: 'Pediatría',       email: 'vpinto@clinica.com'    },
+  { id: 3, nombre: 'Luis',    apellido: 'Aranda',   especialidad: 'Traumatología',   email: 'laranda@clinica.com'   },
+  { id: 4, nombre: 'Sofía',   apellido: 'Guzmán',   especialidad: 'Dermatología',    email: 'sguzman@clinica.com'   },
+  { id: 5, nombre: 'Marco',   apellido: 'Villalba', especialidad: 'Cardiología',     email: 'mvillalba@clinica.com' },
+  { id: 6, nombre: 'Elena',   apellido: 'Castro',   especialidad: 'Clínica General', email: 'ecastro@clinica.com'   },
+]
+
+// GET /api/medicos?especialidad=Cardiología  →  mismo shape
+export const mockEspecialidades = [
   'Cardiología',
-  'Dermatología',
   'Pediatría',
-  'Ginecología',
   'Traumatología',
+  'Dermatología',
   'Clínica General',
 ]
 
-export const medicos = [
-  { id: 1, nombre: 'Carlos',  apellido: 'Mendoza',   especialidad: 'Cardiología',    email: 'c.mendoza@hospital.com' },
-  { id: 2, nombre: 'Ana',     apellido: 'Torres',    especialidad: 'Dermatología',   email: 'a.torres@hospital.com' },
-  { id: 3, nombre: 'Luis',    apellido: 'García',    especialidad: 'Pediatría',      email: 'l.garcia@hospital.com' },
-  { id: 4, nombre: 'María',   apellido: 'Rodríguez', especialidad: 'Ginecología',    email: 'm.rodriguez@hospital.com' },
-  { id: 5, nombre: 'Jorge',   apellido: 'Vargas',    especialidad: 'Traumatología',  email: 'j.vargas@hospital.com' },
-  { id: 6, nombre: 'Sofía',   apellido: 'López',     especialidad: 'Clínica General',email: 's.lopez@hospital.com' },
-]
+// GET /api/medicos/{id}/disponibilidad?semana=YYYY-MM-DD
+// → { medicoId, semana, slots: [{ fecha, hora, disponible, bloqueoActivo }] }
+// Esta función genera slots de ejemplo para cualquier médico y semana
+export function generarSlotsMock(medicoId, fechaLunes) {
+  const horas = [
+    '08:00', '08:30', '09:00', '09:30', '10:00', '10:30',
+    '11:00', '11:30', '14:00', '14:30', '15:00', '15:30',
+  ]
 
-export const slots = [
-  // Carlos Mendoza (Cardiología) — lunes y martes esta semana
-  { id: 1, medicoId: 1, fecha: '2026-05-25', hora: '08:00', disponible: true,  bloqueoActivo: false },
-  { id: 2, medicoId: 1, fecha: '2026-05-25', hora: '09:00', disponible: false, bloqueoActivo: false },
-  { id: 3, medicoId: 1, fecha: '2026-05-25', hora: '10:00', disponible: true,  bloqueoActivo: false },
-  { id: 4, medicoId: 1, fecha: '2026-05-26', hora: '08:00', disponible: true,  bloqueoActivo: true  },
-  { id: 5, medicoId: 1, fecha: '2026-05-26', hora: '09:00', disponible: true,  bloqueoActivo: false },
+  const slots = []
+  for (let dia = 0; dia < 5; dia++) {         // lunes a viernes
+    const fecha = new Date(fechaLunes)
+    fecha.setDate(fecha.getDate() + dia)
+    const fechaStr = fecha.toISOString().split('T')[0]
 
-  // Ana Torres (Dermatología) — lunes esta semana
-  { id: 6, medicoId: 2, fecha: '2026-05-25', hora: '10:00', disponible: true,  bloqueoActivo: false },
-  { id: 7, medicoId: 2, fecha: '2026-05-25', hora: '11:00', disponible: false, bloqueoActivo: false },
+    horas.forEach((hora, idx) => {
+      // patrón determinista para que los mocks sean estables entre renders
+      const seed        = (medicoId * 7 + dia * 5 + idx * 3) % 4
+      const disponible   = seed !== 0
+      const bloqueoActivo = seed === 2
+      slots.push({ fecha: fechaStr, hora, disponible, bloqueoActivo })
+    })
+  }
+  return slots
+}
 
-  // Luis García (Pediatría) — miércoles esta semana
-  { id: 8, medicoId: 3, fecha: '2026-05-27', hora: '14:00', disponible: true,  bloqueoActivo: false },
-  { id: 9, medicoId: 3, fecha: '2026-05-27', hora: '15:00', disponible: true,  bloqueoActivo: true  },
-]
-
-export const pacientes = [
+// GET /api/turnos?pacienteId={id}
+// → [{ id, fecha, hora, estado, medico: { nombre, apellido, especialidad } }]
+export const mockTurnos = [
   {
-    id: 1,
-    ci: '12345678',
-    nombre: 'Pedro',
-    apellido: 'Suárez',
-    fechaNacimiento: '1985-03-15',
-    telefono: '70012345',
-    email: 'pedro.suarez@mail.com',
-  },
-]
-
-export const turnos = [
-  {
-    id: 1,
-    pacienteId: 1,
-    medicoId: 1,
-    slotId: 1,
-    fecha: '2026-05-25',
+    id: 101,
+    fecha: '2026-05-27',
     hora: '09:00',
-    estado: 'confirmado',
+    estado: 'CONFIRMADO',
+    medico: { nombre: 'Carlos', apellido: 'Romero', especialidad: 'Cardiología' },
+  },
+  {
+    id: 102,
+    fecha: '2026-06-03',
+    hora: '14:30',
+    estado: 'PENDIENTE',
+    medico: { nombre: 'Valeria', apellido: 'Pinto', especialidad: 'Pediatría' },
+  },
+  {
+    id: 103,
+    fecha: '2026-05-15',
+    hora: '10:00',
+    estado: 'CANCELADO',
+    medico: { nombre: 'Luis', apellido: 'Aranda', especialidad: 'Traumatología' },
   },
 ]
