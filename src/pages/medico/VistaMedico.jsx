@@ -1,9 +1,9 @@
 // src/pages/medico/VistaMedico.jsx
 // Conectado 100% al backend real:
-//   - GET  /api/medicos/{id}/agenda-semana   → grilla con datos de pacientes
-//   - PATCH /api/turnos/{id}/estado          → marcar CONCLUIDA
-//   - PUT   /api/turnos/{id}/reprogramar     → nueva fecha/hora
-//   - DELETE /api/turnos/{id}                → cancelar con motivo + canales
+//   - GET    /api/medicos/{id}/agenda-semana → grilla con datos de pacientes
+//   - PATCH  /api/turnos/{id}/estado         → marcar CONCLUIDA
+//   - PUT    /api/turnos/{id}/reprogramar    → nueva fecha/hora
+//   - DELETE /api/turnos/{id}/medico         → cancelar con motivo + canales (notifica al paciente)
 
 import { useState, useEffect, useCallback } from 'react'
 import { useMedicoStore } from '../../store/medicoStore'
