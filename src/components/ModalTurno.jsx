@@ -65,7 +65,7 @@ function ModalTurno({ slot, medico, onCerrar }) {
     setLoadingConf(true); clearInterval(intervaloRef.current)
     try {
       await turnoService.confirmar(turnoId)
-      navigate('/mis-turnos')
+      navigate('/paciente/turnos')
     } catch (err) {
       if (err.response?.status === 410)      setFase('expirado')
       else if (err.response?.status === 409) { setMensajeError('Este turno ya fue tomado.'); setFase('error') }
