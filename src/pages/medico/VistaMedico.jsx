@@ -1,9 +1,9 @@
 // src/pages/medico/VistaMedico.jsx
 // Conectado 100% al backend real:
-//   - GET    /api/medicos/{id}/agenda-semana → grilla con datos de pacientes
-//   - PATCH  /api/turnos/{id}/estado         → marcar CONCLUIDA
-//   - PUT    /api/turnos/{id}/reprogramar    → nueva fecha/hora
-//   - DELETE /api/turnos/{id}/medico         → cancelar con motivo + canales (notifica al paciente)
+//   - GET    /api/medicos/{id}/agenda-semana
+//   - PATCH  /api/turnos/{id}/estado
+//   - PUT    /api/turnos/{id}/reprogramar
+//   - DELETE /api/turnos/{id}/medico
 
 import { useState, useEffect, useCallback } from 'react'
 import { useMedicoStore } from '../../store/medicoStore'
@@ -15,8 +15,6 @@ import Toast              from '../../components/medico/Toast'
 import { medicoService }  from '../../services/medicoService'
 import { turnoService }   from '../../services/turnoService'
 
-// ID del médico logueado — en una app real vendría del contexto de autenticación.
-// Por ahora se hardcodea 1 (primer médico del DataSeeder).
 const MEDICO_ID = 1
 
 function getLunesActual() {
@@ -27,10 +25,7 @@ function getLunesActual() {
   hoy.setHours(0, 0, 0, 0)
   return hoy
 }
-
-function toISO(fecha) {
-  return fecha.toISOString().split('T')[0]
-}
+function toISO(fecha) { return fecha.toISOString().split('T')[0] }
 
 export default function VistaMedico() {
   const {
@@ -41,19 +36,17 @@ export default function VistaMedico() {
 
   const [medico, setMedico]               = useState(null)
   const [semanaBase, setSemanaBase]       = useState(getLunesActual)
-  const [modal, setModal]                 = useState(null)   // 'reprogramar' | 'cancelar'
+  const [modal, setModal]                 = useState(null)
   const [loadingAccion, setLoadingAccion] = useState(false)
   const [errorAccion, setErrorAccion]     = useState(null)
   const [toast, setToast]                 = useState(null)
 
-  // Cargar perfil del médico
   useEffect(() => {
     medicoService.getById(MEDICO_ID)
       .then(setMedico)
       .catch(() => setError('No se pudo cargar el perfil del médico.'))
   }, [setError])
 
-  // Cargar agenda semanal enriquecida
   const cargarAgenda = useCallback(() => {
     if (!medico) return
     setLoading(true); setError(null)
@@ -65,9 +58,8 @@ export default function VistaMedico() {
 
   useEffect(() => { cargarAgenda() }, [cargarAgenda])
 
-  function mostrarToast(mensaje, tipo = 'ok') { setToast({ mensaje, tipo }) }
+  const mostrarToast = (mensaje, tipo = 'ok') => setToast({ mensaje, tipo })
 
-  // ── Concluir ──────────────────────────────────────────────────────────────
   async function handleConcluir(turnoId) {
     setLoadingAccion(true)
     try {
@@ -76,14 +68,15 @@ export default function VistaMedico() {
       cerrarPanel()
       mostrarToast('Cita marcada como concluida ✓')
     } catch (err) {
-      const msg = err.response?.status === 422
-        ? 'El turno debe estar en CONFIRMADO para concluirse.'
-        : 'No se pudo actualizar el estado.'
-      mostrarToast(msg, 'error')
+      mostrarToast(
+        err.response?.status === 422
+          ? 'El turno debe estar en CONFIRMADO para concluirse.'
+          : 'No se pudo actualizar el estado.',
+        'error'
+      )
     } finally { setLoadingAccion(false) }
   }
 
-  // ── Reprogramar ───────────────────────────────────────────────────────────
   async function handleReprogramar(nuevaFecha, nuevaHora) {
     if (!citaSeleccionada) return
     setLoadingAccion(true); setErrorAccion(null)
@@ -93,16 +86,14 @@ export default function VistaMedico() {
       setModal(null)
       mostrarToast(`Cita reprogramada: ${nuevaFecha} ${nuevaHora} ↗`)
     } catch (err) {
-      const msg = err.response?.status === 409
-        ? 'Ese horario ya está ocupado.'
-        : err.response?.status === 422
-          ? 'No se puede reprogramar este turno en su estado actual.'
-          : 'No se pudo reprogramar.'
-      setErrorAccion(msg)
+      setErrorAccion(
+        err.response?.status === 409 ? 'Ese horario ya está ocupado.'
+        : err.response?.status === 422 ? 'No se puede reprogramar en su estado actual.'
+        : 'No se pudo reprogramar.'
+      )
     } finally { setLoadingAccion(false) }
   }
 
-  // ── Cancelar ──────────────────────────────────────────────────────────────
   async function handleCancelar(motivo, canales) {
     if (!citaSeleccionada) return
     setLoadingAccion(true); setErrorAccion(null)
@@ -112,12 +103,11 @@ export default function VistaMedico() {
       setModal(null)
       mostrarToast(`Cita cancelada. Notificación enviada vía ${canales.join(', ')} 🔔`)
     } catch (err) {
-      const msg = err.response?.status === 422
-        ? 'No se puede cancelar con menos de 2 horas de anticipación.'
-        : err.response?.status === 400
-          ? 'El motivo de cancelación es requerido.'
-          : 'No se pudo cancelar.'
-      setErrorAccion(msg)
+      setErrorAccion(
+        err.response?.status === 422 ? 'No se puede cancelar con menos de 2 horas de anticipación.'
+        : err.response?.status === 400 ? 'El motivo de cancelación es requerido.'
+        : 'No se pudo cancelar.'
+      )
     } finally { setLoadingAccion(false) }
   }
 
@@ -127,40 +117,62 @@ export default function VistaMedico() {
   )
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f8fafc', fontFamily: "'Inter', system-ui, sans-serif" }}>
+    <div style={{
+      minHeight:   '100vh',
+      background:  'var(--color-fondo)',
+      backgroundImage: 'var(--color-fondo-gradiente)',
+      fontFamily:  'var(--font-body)',
+    }}>
 
-      {/* Header */}
-      <div style={{ background: 'white', borderBottom: '1px solid #e2e8f0', padding: '20px 24px' }}>
+      {/* ── Header ── */}
+      <div style={{
+        background:   'rgba(255,255,255,0.72)',
+        backdropFilter: 'blur(20px)',
+        borderBottom: '1px solid var(--color-borde-suave)',
+        padding:      '20px 24px',
+      }}>
         <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-          <p style={{ fontSize: 11, fontWeight: 600, color: '#2563eb', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 4 }}>
-            Vista del médico
-          </p>
+          <p className="eyebrow" style={{ marginBottom: 6 }}>Vista del médico</p>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
             <div>
-              <h1 style={{ fontSize: 22, fontWeight: 700, color: '#1e293b', margin: 0 }}>
+              <h1 style={{
+                fontFamily:    'var(--font-display)',
+                fontSize:      22,
+                fontWeight:    400,
+                color:         'var(--color-texto)',
+                margin:        0,
+                letterSpacing: '-0.01em',
+              }}>
                 {medico ? `Dr. ${medico.nombre} ${medico.apellido}` : 'Cargando...'}
               </h1>
-              {medico && <p style={{ fontSize: 13, color: '#64748b', marginTop: 3 }}>{medico.especialidad}</p>}
+              {medico && (
+                <p style={{ fontSize: 13, color: 'var(--color-texto-suave)', marginTop: 3 }}>
+                  {medico.especialidad}
+                </p>
+              )}
             </div>
-            <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8, padding: '6px 14px', fontSize: 12, color: '#64748b', fontFamily: 'monospace' }}>
+            <div style={{
+              background:   'var(--color-primario-light)',
+              border:       '1px solid var(--color-borde-medio)',
+              borderRadius: 'var(--radio-sm)',
+              padding:      '6px 14px',
+              fontSize:     12,
+              color:        'var(--color-texto-suave)',
+              fontFamily:   'var(--font-mono)',
+            }}>
               Semana: {toISO(semanaBase)}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Contenido */}
+      {/* ── Contenido ── */}
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '28px 24px 48px' }}>
 
-        {loading && <CargandoIndicador />}
+        {loading && <Spinner label="Cargando agenda..." />}
 
         {error && !loading && (
-          <div style={{ padding: '12px 16px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, color: '#dc2626', fontSize: 13, display: 'flex', alignItems: 'center', gap: 12 }}>
-            ⚠ {error}
-            <button onClick={cargarAgenda} style={{ marginLeft: 'auto', background: 'white', border: '1px solid #fca5a5', borderRadius: 6, color: '#dc2626', fontSize: 12, padding: '4px 10px', cursor: 'pointer', fontFamily: 'inherit' }}>
-              Reintentar
-            </button>
-          </div>
+          <BannerError mensaje={error} onReintentar={cargarAgenda} />
         )}
 
         {!loading && !error && medico && (
@@ -168,13 +180,16 @@ export default function VistaMedico() {
             slots={slots}
             semanaBase={semanaBase}
             onSlotClick={seleccionarCita}
-            onSemanaAnterior={() => { const d = new Date(semanaBase); d.setDate(d.getDate() - 7); setSemanaBase(d) }}
-            onSemanaSiguiente={() => { const d = new Date(semanaBase); d.setDate(d.getDate() + 7); setSemanaBase(d) }}
+            onSemanaAnterior={() => {
+              const d = new Date(semanaBase); d.setDate(d.getDate() - 7); setSemanaBase(d)
+            }}
+            onSemanaSiguiente={() => {
+              const d = new Date(semanaBase); d.setDate(d.getDate() + 7); setSemanaBase(d)
+            }}
           />
         )}
       </div>
 
-      {/* Panel lateral */}
       {citaSeleccionada && !modal && (
         <PanelCita
           slot={citaSeleccionada}
@@ -186,7 +201,6 @@ export default function VistaMedico() {
         />
       )}
 
-      {/* Modal reprogramar */}
       {modal === 'reprogramar' && citaSeleccionada && (
         <ModalReprogramar
           turno={{ ...citaSeleccionada.turno, fecha: citaSeleccionada.fecha, hora: citaSeleccionada.hora }}
@@ -198,7 +212,6 @@ export default function VistaMedico() {
         />
       )}
 
-      {/* Modal cancelar */}
       {modal === 'cancelar' && citaSeleccionada && (
         <ModalCancelar
           turno={{ ...citaSeleccionada.turno, fecha: citaSeleccionada.fecha, hora: citaSeleccionada.hora }}
@@ -214,12 +227,57 @@ export default function VistaMedico() {
   )
 }
 
-function CargandoIndicador() {
+// ── Componentes auxiliares compartibles ───────────────────────────────────────
+
+export function Spinner({ label = 'Cargando...' }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '20px 0', color: '#64748b', fontSize: 13 }}>
-      <div style={{ width: 18, height: 18, border: '2px solid #e2e8f0', borderTopColor: '#2563eb', borderRadius: '50%', animation: 'spin 0.7s linear infinite', flexShrink: 0 }} />
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '20px 0', color: 'var(--color-texto-muted)', fontSize: 13 }}>
+      <div style={{
+        width: 18, height: 18,
+        border: '2px solid var(--color-borde-suave)',
+        borderTopColor: 'var(--color-primario)',
+        borderRadius: '50%',
+        animation: 'spin 0.7s linear infinite',
+        flexShrink: 0,
+      }} />
       <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
-      Cargando agenda...
+      {label}
+    </div>
+  )
+}
+
+export function BannerError({ mensaje, onReintentar }) {
+  return (
+    <div style={{
+      padding:      '12px 16px',
+      background:   'rgba(239,68,68,0.06)',
+      border:       '1px solid rgba(239,68,68,0.2)',
+      borderRadius: 'var(--radio-md)',
+      color:        '#dc2626',
+      fontSize:     13,
+      display:      'flex',
+      alignItems:   'center',
+      gap:          12,
+    }}>
+      ⚠ {mensaje}
+      {onReintentar && (
+        <button
+          onClick={onReintentar}
+          style={{
+            marginLeft:   'auto',
+            background:   'white',
+            border:       '1px solid rgba(239,68,68,0.3)',
+            borderRadius: 'var(--radio-sm)',
+            color:        '#dc2626',
+            fontSize:     12,
+            padding:      '4px 10px',
+            cursor:       'pointer',
+            fontFamily:   'inherit',
+          }}
+        >
+          Reintentar
+        </button>
+      )}
     </div>
   )
 }
