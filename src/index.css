@@ -102,10 +102,10 @@
   --estado-bloqueado-tenue:  rgba(124,58,237,0.1);
 
   /* CONCLUIDA — azul índigo */
-  --estado-concluida-bg:     #7c3aed;
+  --estado-concluida-bg:     #1d4ed8;
   --estado-concluida-texto:  #ffffff;
-  --estado-concluida-borde:  #6d28d9;
-  --estado-concluida-tenue:  rgba(124,58,237,0.1);
+  --estado-concluida-borde:  #1e40af;
+  --estado-concluida-tenue:  rgba(29,78,216,0.1);
 
   /* CANCELADO — gris neutro */
   --estado-cancelado-bg:     #e2e8f0;
@@ -140,7 +140,7 @@
 .chip--confirmado { background: var(--estado-ocupado-tenue);   color: #1d4ed8;  border-color: rgba(29,78,216,0.25);  }
 .chip--pendiente  { background: var(--estado-pendiente-tenue); color: #d97706;  border-color: var(--estado-pendiente-borde); }
 .chip--bloqueado  { background: var(--estado-bloqueado-tenue); color: #5b21b6;  border-color: rgba(109,40,217,0.25); }
-.chip--concluida  { background: var(--estado-concluida-tenue); color: #5b21b6;  border-color: rgba(109,40,217,0.25); }
+.chip--concluida  { background: var(--estado-concluida-tenue); color: #1d4ed8;  border-color: rgba(29,78,216,0.25);  }
 .chip--cancelado  { background: var(--estado-cancelado-tenue); color: #64748b;  border-color: var(--estado-cancelado-borde); }
 .chip--expirado   { background: var(--estado-expirado-tenue);  color: #94a3b8;  border-color: var(--estado-expirado-borde);  }
 

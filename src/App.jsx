@@ -1,5 +1,5 @@
 // src/App.jsx
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import './App.css'
 import './index.css'
 
@@ -11,7 +11,6 @@ import VistaPaciente     from './pages/medico/VistaPaciente'
 import Navbar        from './components/Navbar'
 import Inicio        from './pages/Inicio'
 import BuscarMedico  from './pages/BuscarMedico'
-import MisTurnos     from './pages/MisTurnos'
 import CalendarioPage from './pages/CalendarioPage'
 
 function App() {
@@ -21,15 +20,14 @@ function App() {
         <Navbar />
         <main className="app-contenido">
           <Routes>
-            <Route path="/login"          element={<LoginPage />} />
-            <Route path="/"               element={<Inicio />} />
-            <Route path="/buscar"         element={<BuscarMedico />} />
-            <Route path="/mis-turnos"     element={<MisTurnos />} />
-            <Route path="/agenda"         element={<GestionAgendaPage />} />
-            <Route path="/calendario"     element={<CalendarioPage />} />
-
-            <Route path="/medico"         element={<VistaMedico />} />
+            <Route path="/login"           element={<LoginPage />} />
+            <Route path="/"                element={<Inicio />} />
+            <Route path="/buscar"          element={<BuscarMedico />} />
             <Route path="/paciente/turnos" element={<VistaPaciente />} />
+            <Route path="/mis-turnos"      element={<Navigate to="/paciente/turnos" replace />} />
+            <Route path="/agenda"          element={<GestionAgendaPage />} />
+            <Route path="/calendario"      element={<CalendarioPage />} />
+            <Route path="/medico"          element={<VistaMedico />} />
           </Routes>
         </main>
       </div>

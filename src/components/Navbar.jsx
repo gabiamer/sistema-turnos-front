@@ -1,20 +1,53 @@
 // src/components/Navbar.jsx
 // Estética editorial pastel — DM Serif Display + DM Sans
-// Consistente con BuscarMedico y FormularioPaciente
+// Links condicionales según rol guardado en sessionStorage:
+//   { rol: 'PACIENTE' } → Inicio, Buscar médico, Mis turnos
+//   { rol: 'MEDICO'   } → Inicio, Mi agenda, Vista médico
+//   sin sesión         → Inicio, Buscar médico
+
 import { useState } from 'react'
 import { NavLink }  from 'react-router-dom'
 
-const LINKS = [
-  { to: '/',               label: 'Inicio',        end: true  },
-  { to: '/buscar',         label: 'Buscar médico', end: false },
-  { to: '/paciente/turnos',label: 'Mis turnos',    end: false },
-  { to: '/medico',         label: 'Vista médico',  end: false },
-]
-
 const fontImport = `@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap');`
 
+const LINKS_PACIENTE = [
+  { to: '/',                label: 'Inicio',        end: true  },
+  { to: '/buscar',          label: 'Buscar médico', end: false },
+  { to: '/paciente/turnos', label: 'Mis turnos',    end: false },
+]
+
+const LINKS_MEDICO = [
+  { to: '/',       label: 'Inicio',       end: true  },
+  { to: '/agenda', label: 'Mi agenda',    end: false },
+  { to: '/medico', label: 'Vista médico', end: false },
+]
+
+const LINKS_DEFAULT = [
+  { to: '/',       label: 'Inicio',        end: true  },
+  { to: '/buscar', label: 'Buscar médico', end: false },
+]
+
+function getLinks() {
+  try {
+    const sesion = sessionStorage.getItem('sesion')
+    if (!sesion) return LINKS_DEFAULT
+    const { rol } = JSON.parse(sesion)
+    if (rol === 'MEDICO')   return LINKS_MEDICO
+    if (rol === 'PACIENTE') return LINKS_PACIENTE
+  } catch { /* sesion corrupta */ }
+  return LINKS_DEFAULT
+}
+
 export default function Navbar() {
-  const [menuOpen, setMenuOpen] = useState(false)
+  // Re-render cuando cambia sessionStorage (login/logout en la misma pestaña)
+  const [, forceUpdate] = useState(0)
+  const links = getLinks()
+
+  // Escuchar cambios de storage desde otras pestañas
+  // (para la misma pestaña, LoginPage llama a forceUpdate directamente si lo necesita)
+  if (typeof window !== 'undefined') {
+    window.addEventListener('storage', () => forceUpdate(n => n + 1), { once: false })
+  }
 
   return (
     <nav style={{
@@ -65,15 +98,9 @@ export default function Navbar() {
           </span>
         </NavLink>
 
-        {/* Links desktop */}
-        <ul style={{
-          display:    'flex',
-          listStyle:  'none',
-          gap:        '0.25rem',
-          margin:     0,
-          padding:    0,
-        }}>
-          {LINKS.map(({ to, label, end }) => (
+        {/* Links según rol */}
+        <ul style={{ display: 'flex', listStyle: 'none', gap: '0.25rem', margin: 0, padding: 0 }}>
+          {links.map(({ to, label, end }) => (
             <li key={to}>
               <NavLink
                 to={to}
@@ -99,28 +126,72 @@ export default function Navbar() {
           ))}
         </ul>
 
-        {/* CTA */}
-        <NavLink
-          to="/login"
-          style={{
-            padding:         '0.5rem 1.25rem',
-            borderRadius:    '50px',
-            border:          '1.5px solid #4a7c9e',
-            background:      '#4a7c9e',
-            color:           'white',
-            fontSize:        '0.82rem',
-            fontWeight:      '500',
-            textDecoration:  'none',
-            letterSpacing:   '0.04em',
-            transition:      'all 0.22s ease',
-            fontFamily:      "'DM Sans', sans-serif",
-          }}
-          onMouseEnter={e => { e.currentTarget.style.background = '#3a6282'; e.currentTarget.style.borderColor = '#3a6282' }}
-          onMouseLeave={e => { e.currentTarget.style.background = '#4a7c9e'; e.currentTarget.style.borderColor = '#4a7c9e' }}
-        >
-          Ingresar
-        </NavLink>
+        {/* CTA: Ingresar o cerrar sesión */}
+        <SesionButton onLogout={() => forceUpdate(n => n + 1)} />
       </div>
     </nav>
+  )
+}
+
+function SesionButton({ onLogout }) {
+  const sesionRaw = sessionStorage.getItem('sesion')
+  let nombre = null
+  try {
+    if (sesionRaw) nombre = JSON.parse(sesionRaw)?.nombre
+  } catch { /* corrupta */ }
+
+  if (nombre) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+        <span style={{ fontSize: '0.8rem', color: '#4a7c9e', fontWeight: '500' }}>
+          {nombre}
+        </span>
+        <button
+          onClick={() => {
+            sessionStorage.removeItem('sesion')
+            sessionStorage.removeItem('paciente')
+            onLogout()
+            window.location.href = '/login'
+          }}
+          style={{
+            padding:        '0.45rem 1rem',
+            borderRadius:   '50px',
+            border:         '1.5px solid rgba(74,124,158,0.4)',
+            background:     'transparent',
+            color:          '#4a7c9e',
+            fontSize:       '0.82rem',
+            fontWeight:     '500',
+            cursor:         'pointer',
+            fontFamily:     "'DM Sans', sans-serif",
+            letterSpacing:  '0.04em',
+          }}
+        >
+          Salir
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <NavLink
+      to="/login"
+      style={{
+        padding:        '0.5rem 1.25rem',
+        borderRadius:   '50px',
+        border:         '1.5px solid #4a7c9e',
+        background:     '#4a7c9e',
+        color:          'white',
+        fontSize:       '0.82rem',
+        fontWeight:     '500',
+        textDecoration: 'none',
+        letterSpacing:  '0.04em',
+        transition:     'all 0.22s ease',
+        fontFamily:     "'DM Sans', sans-serif",
+      }}
+      onMouseEnter={e => { e.currentTarget.style.background = '#3a6282'; e.currentTarget.style.borderColor = '#3a6282' }}
+      onMouseLeave={e => { e.currentTarget.style.background = '#4a7c9e'; e.currentTarget.style.borderColor = '#4a7c9e' }}
+    >
+      Ingresar
+    </NavLink>
   )
 }

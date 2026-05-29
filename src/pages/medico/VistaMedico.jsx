@@ -7,6 +7,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useMedicoStore } from '../../store/medicoStore'
+import { useModal }       from '../../hooks/useModal'
 import CalendarioMedico   from '../../components/medico/CalendarioMedico'
 import PanelCita          from '../../components/medico/PanelCita'
 import ModalReprogramar   from '../../components/medico/ModalReprogramar'
@@ -36,10 +37,10 @@ export default function VistaMedico() {
 
   const [medico, setMedico]               = useState(null)
   const [semanaBase, setSemanaBase]       = useState(getLunesActual)
-  const [modal, setModal]                 = useState(null)
   const [loadingAccion, setLoadingAccion] = useState(false)
-  const [errorAccion, setErrorAccion]     = useState(null)
   const [toast, setToast]                 = useState(null)
+
+  const { modal, abrirModal, cerrarModal, esModal, errorAccion, setErrorAccion } = useModal()
 
   useEffect(() => {
     medicoService.getById(MEDICO_ID)
@@ -83,7 +84,7 @@ export default function VistaMedico() {
     try {
       await turnoService.putReprogramar(citaSeleccionada.turno.id, nuevaFecha, nuevaHora)
       reprogramarTurno(citaSeleccionada.turno.id, nuevaFecha, nuevaHora)
-      setModal(null)
+      cerrarModal()
       mostrarToast(`Cita reprogramada: ${nuevaFecha} ${nuevaHora} ↗`)
     } catch (err) {
       setErrorAccion(
@@ -100,7 +101,7 @@ export default function VistaMedico() {
     try {
       await turnoService.cancelarMedico(citaSeleccionada.turno.id, motivo, canales)
       liberarSlot(citaSeleccionada.turno.id)
-      setModal(null)
+      cerrarModal()
       mostrarToast(`Cita cancelada. Notificación enviada vía ${canales.join(', ')} 🔔`)
     } catch (err) {
       setErrorAccion(
@@ -195,28 +196,28 @@ export default function VistaMedico() {
           slot={citaSeleccionada}
           onCerrar={cerrarPanel}
           onConcluir={handleConcluir}
-          onReprogramar={() => setModal('reprogramar')}
-          onCancelar={() => setModal('cancelar')}
+          onReprogramar={() => abrirModal('reprogramar')}
+          onCancelar={() => abrirModal('cancelar')}
           cargando={loadingAccion}
         />
       )}
 
-      {modal === 'reprogramar' && citaSeleccionada && (
+      {esModal('reprogramar') && citaSeleccionada && (
         <ModalReprogramar
           turno={{ ...citaSeleccionada.turno, fecha: citaSeleccionada.fecha, hora: citaSeleccionada.hora }}
           slotsDisponibles={slotsLibresParaReprogramar}
           onConfirmar={handleReprogramar}
-          onCerrar={() => { setModal(null); setErrorAccion(null) }}
+          onCerrar={cerrarModal}
           cargando={loadingAccion}
           error={errorAccion}
         />
       )}
 
-      {modal === 'cancelar' && citaSeleccionada && (
+      {esModal('cancelar') && citaSeleccionada && (
         <ModalCancelar
           turno={{ ...citaSeleccionada.turno, fecha: citaSeleccionada.fecha, hora: citaSeleccionada.hora }}
           onConfirmar={handleCancelar}
-          onCerrar={() => { setModal(null); setErrorAccion(null) }}
+          onCerrar={cerrarModal}
           cargando={loadingAccion}
           error={errorAccion}
         />
