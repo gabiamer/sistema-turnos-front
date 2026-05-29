@@ -1,22 +1,17 @@
 // src/pages/medico/VistaMedico.jsx
-// Conectado 100% al backend real:
-//   - GET    /api/medicos/{id}/agenda-semana
-//   - PATCH  /api/turnos/{id}/estado
-//   - PUT    /api/turnos/{id}/reprogramar
-//   - DELETE /api/turnos/{id}/medico
+// Lee el medicoId de sessionStorage['sesion'] en vez de hardcodearlo.
 
 import { useState, useEffect, useCallback } from 'react'
-import { useMedicoStore } from '../../store/medicoStore'
-import { useModal }       from '../../hooks/useModal'
-import CalendarioMedico   from '../../components/medico/CalendarioMedico'
-import PanelCita          from '../../components/medico/PanelCita'
-import ModalReprogramar   from '../../components/medico/ModalReprogramar'
-import ModalCancelar      from '../../components/medico/ModalCancelar'
-import Toast              from '../../components/medico/Toast'
-import { medicoService }  from '../../services/medicoService'
-import { turnoService }   from '../../services/turnoService'
-
-const MEDICO_ID = 1
+import { useNavigate }       from 'react-router-dom'
+import { useMedicoStore }    from '../../store/medicoStore'
+import { useModal }          from '../../hooks/useModal'
+import CalendarioMedico      from '../../components/medico/CalendarioMedico'
+import PanelCita             from '../../components/medico/PanelCita'
+import ModalReprogramar      from '../../components/medico/ModalReprogramar'
+import ModalCancelar         from '../../components/medico/ModalCancelar'
+import Toast                 from '../../components/medico/Toast'
+import { medicoService }     from '../../services/medicoService'
+import { turnoService }      from '../../services/turnoService'
 
 function getLunesActual() {
   const hoy = new Date()
@@ -28,12 +23,25 @@ function getLunesActual() {
 }
 function toISO(fecha) { return fecha.toISOString().split('T')[0] }
 
+// Leer medicoId desde sessionStorage
+function getMedicoIdSesion() {
+  try {
+    const raw = sessionStorage.getItem('sesion')
+    if (!raw) return null
+    const s = JSON.parse(raw)
+    return s?.rol === 'MEDICO' ? s.id : null
+  } catch { return null }
+}
+
 export default function VistaMedico() {
+  const navigate = useNavigate()
   const {
     slots, setSlots, loading, setLoading, error, setError,
     citaSeleccionada, seleccionarCita, cerrarPanel,
     actualizarEstadoTurno, liberarSlot, reprogramarTurno,
   } = useMedicoStore()
+
+  const medicoId = getMedicoIdSesion()
 
   const [medico, setMedico]               = useState(null)
   const [semanaBase, setSemanaBase]       = useState(getLunesActual)
@@ -42,11 +50,13 @@ export default function VistaMedico() {
 
   const { modal, abrirModal, cerrarModal, esModal, errorAccion, setErrorAccion } = useModal()
 
+  // Guardia: si no hay sesión de médico, redirigir
   useEffect(() => {
-    medicoService.getById(MEDICO_ID)
+    if (!medicoId) { navigate('/login', { replace: true }); return }
+    medicoService.getById(medicoId)
       .then(setMedico)
       .catch(() => setError('No se pudo cargar el perfil del médico.'))
-  }, [setError])
+  }, [medicoId, navigate, setError])
 
   const cargarAgenda = useCallback(() => {
     if (!medico) return
@@ -119,56 +129,62 @@ export default function VistaMedico() {
 
   return (
     <div style={{
-      minHeight:   '100vh',
-      background:  'var(--color-fondo)',
+      minHeight:  '100vh',
+      background: 'var(--color-fondo)',
       backgroundImage: 'var(--color-fondo-gradiente)',
-      fontFamily:  'var(--font-body)',
+      fontFamily: 'var(--font-body)',
     }}>
 
       {/* ── Header ── */}
       <div style={{
-        background:   'rgba(255,255,255,0.72)',
+        background:     'rgba(255,255,255,0.72)',
         backdropFilter: 'blur(20px)',
-        borderBottom: '1px solid var(--color-borde-suave)',
-        padding:      '20px 24px',
+        borderBottom:   '1px solid var(--color-borde-suave)',
+        padding:        '20px 24px',
       }}>
         <div style={{ maxWidth: 1100, margin: '0 auto' }}>
           <p className="eyebrow" style={{ marginBottom: 6 }}>Vista del médico</p>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:12 }}>
             <div>
               <h1 style={{
-                fontFamily:    'var(--font-display)',
-                fontSize:      22,
-                fontWeight:    400,
-                color:         'var(--color-texto)',
-                margin:        0,
-                letterSpacing: '-0.01em',
+                fontFamily: 'var(--font-display)',
+                fontSize: 22, fontWeight: 400,
+                color: 'var(--color-texto)', margin: 0, letterSpacing: '-0.01em',
               }}>
                 {medico ? `Dr. ${medico.nombre} ${medico.apellido}` : 'Cargando...'}
               </h1>
               {medico && (
-                <p style={{ fontSize: 13, color: 'var(--color-texto-suave)', marginTop: 3 }}>
+                <p style={{ fontSize:13, color:'var(--color-texto-suave)', marginTop:3 }}>
                   {medico.especialidad}
                 </p>
               )}
             </div>
-            <div style={{
-              background:   'var(--color-primario-light)',
-              border:       '1px solid var(--color-borde-medio)',
-              borderRadius: 'var(--radio-sm)',
-              padding:      '6px 14px',
-              fontSize:     12,
-              color:        'var(--color-texto-suave)',
-              fontFamily:   'var(--font-mono)',
-            }}>
-              Semana: {toISO(semanaBase)}
+            <div style={{ display:'flex', gap:10, alignItems:'center' }}>
+              <div style={{
+                background:   'var(--color-primario-light)',
+                border:       '1px solid var(--color-borde-medio)',
+                borderRadius: 'var(--radio-sm)',
+                padding:      '6px 14px',
+                fontSize:     12,
+                color:        'var(--color-texto-suave)',
+                fontFamily:   'var(--font-mono)',
+              }}>
+                Semana: {toISO(semanaBase)}
+              </div>
+              <button
+                onClick={() => navigate('/agenda')}
+                className="btn btn--outline"
+                style={{ fontSize:12, padding:'6px 14px' }}
+              >
+                Gestionar agenda
+              </button>
             </div>
           </div>
         </div>
       </div>
 
       {/* ── Contenido ── */}
-      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '28px 24px 48px' }}>
+      <div style={{ maxWidth:1100, margin:'0 auto', padding:'28px 24px 48px' }}>
 
         {loading && <Spinner label="Cargando agenda..." />}
 
@@ -228,20 +244,20 @@ export default function VistaMedico() {
   )
 }
 
-// ── Componentes auxiliares compartibles ───────────────────────────────────────
+// ── Componentes auxiliares exportados (usados por VistaPaciente) ─────────────
 
 export function Spinner({ label = 'Cargando...' }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '20px 0', color: 'var(--color-texto-muted)', fontSize: 13 }}>
+    <div style={{ display:'flex', alignItems:'center', gap:10, padding:'20px 0', color:'var(--color-texto-muted)', fontSize:13 }}>
       <div style={{
-        width: 18, height: 18,
-        border: '2px solid var(--color-borde-suave)',
-        borderTopColor: 'var(--color-primario)',
-        borderRadius: '50%',
-        animation: 'spin 0.7s linear infinite',
-        flexShrink: 0,
+        width:18, height:18,
+        border:'2px solid var(--color-borde-suave)',
+        borderTopColor:'var(--color-primario)',
+        borderRadius:'50%',
+        animation:'spin 0.7s linear infinite',
+        flexShrink:0,
       }} />
-      <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+      <style>{`@keyframes spin { to { transform:rotate(360deg) } }`}</style>
       {label}
     </div>
   )
@@ -254,26 +270,19 @@ export function BannerError({ mensaje, onReintentar }) {
       background:   'rgba(239,68,68,0.06)',
       border:       '1px solid rgba(239,68,68,0.2)',
       borderRadius: 'var(--radio-md)',
-      color:        '#dc2626',
-      fontSize:     13,
-      display:      'flex',
-      alignItems:   'center',
-      gap:          12,
+      color:        '#dc2626', fontSize:13,
+      display:'flex', alignItems:'center', gap:12,
     }}>
       ⚠ {mensaje}
       {onReintentar && (
         <button
           onClick={onReintentar}
           style={{
-            marginLeft:   'auto',
-            background:   'white',
-            border:       '1px solid rgba(239,68,68,0.3)',
-            borderRadius: 'var(--radio-sm)',
-            color:        '#dc2626',
-            fontSize:     12,
-            padding:      '4px 10px',
-            cursor:       'pointer',
-            fontFamily:   'inherit',
+            marginLeft:'auto', background:'white',
+            border:'1px solid rgba(239,68,68,0.3)',
+            borderRadius:'var(--radio-sm)',
+            color:'#dc2626', fontSize:12, padding:'4px 10px',
+            cursor:'pointer', fontFamily:'inherit',
           }}
         >
           Reintentar
