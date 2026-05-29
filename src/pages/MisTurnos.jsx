@@ -31,7 +31,7 @@ function MisTurnos() {
   const [turnoAConfirmar, setTurnoAConfirmar] = useState(null)
 
   const cargarTurnos = useCallback(() => {
-    if (!paciente?.id) return
+    if (!paciente?.id) { setLoading(false); return }
     setLoading(true)
     turnoService.listar(paciente.id)
       .then(data => setTurnos(Array.isArray(data) ? data : []))
