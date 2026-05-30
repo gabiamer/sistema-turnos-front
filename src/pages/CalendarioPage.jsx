@@ -163,7 +163,12 @@ export default function CalendarioPage() {
           {!loading && !error && (
             <>
               <div className="cal-nav">
-                <button className="cal-btn" onClick={() => setSemanaOffset(o => o - 1)}>
+                <button
+                  className="cal-btn"
+                  onClick={() => setSemanaOffset(o => o - 1)}
+                  disabled={semanaOffset <= 0}
+                  style={{ opacity: semanaOffset <= 0 ? 0.4 : 1, cursor: semanaOffset <= 0 ? 'not-allowed' : 'pointer' }}
+                >
                   ← Anterior
                 </button>
                 <span className="cal-semana-label">

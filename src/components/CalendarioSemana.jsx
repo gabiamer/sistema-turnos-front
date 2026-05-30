@@ -55,14 +55,23 @@ function CalendarioSemana({ slots, onSlotClick }) {
                 // API devuelve bloqueoActivo (no bloqueado)
                 const bloqueado = slot.bloqueoActivo
                 const ocupado   = !slot.disponible
-                const libre     = !bloqueado && !ocupado
+
+                // Verificar si el slot ya pasó (fecha+hora menores al momento actual)
+                const [hh, mm] = slot.hora.split(':').map(Number)
+                const [anio, mes, dia] = fecha.split('-').map(Number)
+                const fechaHoraSlot = new Date(anio, mes - 1, dia, hh, mm)
+                const esPasado = fechaHoraSlot < new Date()
+
+                const libre = !bloqueado && !ocupado && !esPasado
 
                 let bg     = '#22c55e'
                 let color  = 'white'
                 let cursor = 'pointer'
                 let title  = 'Disponible — click para reservar'
 
-                if (bloqueado) {
+                if (esPasado) {
+                  bg = '#f1f5f9'; color = '#cbd5e1'; cursor = 'not-allowed'; title = 'Horario ya pasado'
+                } else if (bloqueado) {
                   bg = '#94a3b8'; cursor = 'not-allowed'; title = 'Bloqueado por el médico'
                 } else if (ocupado) {
                   bg = '#e2e8f0'; color = '#94a3b8'; cursor = 'not-allowed'; title = 'Ocupado'
@@ -72,7 +81,7 @@ function CalendarioSemana({ slots, onSlotClick }) {
                   <button
                     key={`${fecha}-${index}`}
                     title={title}
-                    aria-label={`${slot.hora} — ${libre ? 'disponible' : bloqueado ? 'bloqueado' : 'ocupado'}`}
+                    aria-label={`${slot.hora} — ${libre ? 'disponible' : esPasado ? 'pasado' : bloqueado ? 'bloqueado' : 'ocupado'}`}
                     disabled={!libre}
                     onClick={() => libre && onSlotClick && onSlotClick(slot)}
                     style={{
@@ -86,7 +95,7 @@ function CalendarioSemana({ slots, onSlotClick }) {
                       cursor,
                       textAlign: 'center',
                       transition: 'opacity 0.15s',
-                      opacity: libre ? 1 : 0.6,
+                      opacity: libre ? 1 : 0.55,
                     }}
                   >
                     {slot.hora}
