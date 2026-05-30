@@ -38,7 +38,7 @@ export default function VistaPaciente() {
     setLoading(true); setError('')
     turnoService.listar(paciente.id)
       .then(data => setTurnos(Array.isArray(data) ? data : []))
-      .catch(() => setError('No se pudieron cargar los turnos. Verificá tu conexión e intentá de nuevo.'))
+      .catch(() => setError('No se pudieron cargar los turnos. Verifica tu conexión e intenta de nuevo.'))
       .finally(() => setLoading(false))
   }, [paciente])
 
@@ -63,7 +63,7 @@ export default function VistaPaciente() {
       else if (err.response?.status === 403)
         setErrorCancel('No estás autorizado para cancelar este turno.')
       else
-        setErrorCancel('Error al cancelar. Intentá de nuevo.')
+        setErrorCancel('Error al cancelar. Intenta de nuevo.')
     } finally { setLoadingCancel(false) }
   }
 
@@ -107,7 +107,7 @@ export default function VistaPaciente() {
       />
 
       {turnos.length === 0 && (
-        <div style={cardVacioStyle}>No tenés turnos agendados aún.</div>
+        <div style={cardVacioStyle}>No tienes turnos agendados aún.</div>
       )}
 
       {turnosActivos.length > 0 && (
@@ -149,7 +149,7 @@ export default function VistaPaciente() {
           >
             <style>{`@keyframes modalIn { from{opacity:0;transform:scale(0.97) translateY(8px)} to{opacity:1;transform:none} }`}</style>
             <h3 style={{ fontSize: 17, fontWeight: 700, color: '#1e293b', margin: 0 }}>¿Cancelar turno?</h3>
-            <p style={{ fontSize: 13, color: '#64748b' }}>Solo podés cancelar hasta 2 horas antes del turno.</p>
+            <p style={{ fontSize: 13, color: '#64748b' }}>Solo puedes cancelar hasta 2 horas antes del turno.</p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               <label style={{ fontSize: 12, fontWeight: 600, color: '#374151' }}>Motivo (opcional)</label>

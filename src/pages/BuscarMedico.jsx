@@ -104,12 +104,12 @@ function BuscarMedico() {
 
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '2rem', flexWrap: 'wrap', marginBottom: 'clamp(2rem,4vw,3.5rem)' }}>
           <h1 style={{ fontFamily: "'DM Serif Display', Georgia, serif", fontSize: 'clamp(2.2rem, 5.5vw, 4rem)', fontWeight: '400', color: '#1c3545', lineHeight: 1.1, letterSpacing: '-0.02em', margin: 0, maxWidth: '520px' }}>
-            Encontrá<br />
+            Encuentra<br />
             <em style={{ fontStyle: 'italic', color: '#4a7c9e' }}>el médico</em><br />
-            ideal para vos.
+            ideal para ti.
           </h1>
           <p style={{ fontSize: '0.9rem', color: '#4a7c9e', lineHeight: 1.7, maxWidth: '280px', marginTop: '0.5rem', fontWeight: '300', alignSelf: 'flex-end', paddingBottom: '0.5rem' }}>
-            Buscá por nombre o especialidad y reservá tu turno de forma rápida y segura.
+            Busca por nombre o especialidad y reserva tu turno de forma rápida y segura.
           </p>
         </div>
 

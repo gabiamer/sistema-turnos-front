@@ -88,7 +88,7 @@ function FormularioPaciente({ onEnviar }) {
       <div style={{ marginBottom: '2rem' }}>
         <p style={eyebrow}>Datos personales</p>
         <h2 style={titulo}>Información del paciente</h2>
-        <p style={subtitulo}>Completá tus datos para continuar con la reserva.</p>
+        <p style={subtitulo}>Completa tus datos para continuar con la reserva.</p>
       </div>
 
       {/* Error servidor */}

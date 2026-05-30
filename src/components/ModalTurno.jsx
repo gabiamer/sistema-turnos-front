@@ -34,15 +34,15 @@ function ModalTurno({ slot, medico, onCerrar }) {
   useEffect(() => () => clearInterval(intervaloRef.current), [])
 
   async function handleBuscarPaciente() {
-    if (!ci.trim()) { setErrorCi('Ingresá tu CI para continuar.'); return }
+    if (!ci.trim()) { setErrorCi('Ingresa tu CI para continuar.'); return }
     setLoadingCi(true); setErrorCi('')
     try {
       const data = await pacienteService.buscarPorCi(ci.trim())
       setPaciente(data)
       setFase('resumen')
     } catch (err) {
-      if (err.response?.status === 404) setErrorCi('No encontramos ese CI. Verificá o registrate primero.')
-      else setErrorCi('Error al buscar el paciente. Intentá de nuevo.')
+      if (err.response?.status === 404) setErrorCi('No encontramos ese CI. Verifica o regístrate primero.')
+      else setErrorCi('Error al buscar el paciente. Intenta de nuevo.')
     } finally { setLoadingCi(false) }
   }
 
@@ -54,8 +54,8 @@ function ModalTurno({ slot, medico, onCerrar }) {
     } catch (err) {
       clearInterval(intervaloRef.current)
       if (err.response?.status === 409)      setMensajeError('Este turno ya fue tomado por otro paciente.')
-      else if (err.response?.status === 422) setMensajeError('Ya tenés un turno reservado para ese día.')
-      else                                   setMensajeError('No se pudo reservar el turno. Intentá de nuevo.')
+      else if (err.response?.status === 422) setMensajeError('Ya tienes un turno reservado para ese día.')
+      else                                   setMensajeError('No se pudo reservar el turno. Intenta de nuevo.')
       setFase('error')
     }
   }
@@ -69,7 +69,7 @@ function ModalTurno({ slot, medico, onCerrar }) {
     } catch (err) {
       if (err.response?.status === 410)      setFase('expirado')
       else if (err.response?.status === 409) { setMensajeError('Este turno ya fue tomado.'); setFase('error') }
-      else                                   { setMensajeError('Error al confirmar. Intentá de nuevo.'); setFase('error') }
+      else                                   { setMensajeError('Error al confirmar. Intenta de nuevo.'); setFase('error') }
     } finally { setLoadingConf(false) }
   }
 
@@ -94,7 +94,7 @@ function ModalTurno({ slot, medico, onCerrar }) {
           <div>
             <p style={{ fontSize:'0.7rem', fontWeight:'500', color:'#4a7c9e', letterSpacing:'0.12em', textTransform:'uppercase', margin:'0 0 0.3rem' }}>Reserva de turno</p>
             <h2 style={{ fontFamily:"'DM Serif Display',Georgia,serif", fontSize:'1.25rem', fontWeight:'400', color:'#1c3545', margin:0 }}>
-              {fase === 'identificacion' ? 'Identificate' : 'Confirmá tu cita'}
+              {fase === 'identificacion' ? 'Identifícate' : 'Confirma tu cita'}
             </h2>
           </div>
           <button onClick={onCerrar} style={{ background:'rgba(74,124,158,0.1)', border:'none', borderRadius:'10px', width:'32px', height:'32px', cursor:'pointer', color:'#4a7c9e', fontSize:'0.9rem', display:'flex', alignItems:'center', justifyContent:'center' }}>✕</button>
@@ -122,7 +122,7 @@ function ModalTurno({ slot, medico, onCerrar }) {
             </div>
 
             <p style={{ fontSize:'0.82rem', color:'#7fa3b8', marginBottom:'1rem', lineHeight:1.6 }}>
-              Ingresá tu CI para identificarte y continuar con la reserva.
+              Ingresa tu CI para identificarte y continuar con la reserva.
             </p>
 
             <div style={{ marginBottom:'1rem' }}>

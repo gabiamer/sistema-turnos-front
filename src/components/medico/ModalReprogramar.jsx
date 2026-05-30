@@ -94,7 +94,7 @@ export default function ModalReprogramar({ turno, slotsDisponibles, onConfirmar,
             disabled={!slotElegido || cargando}
             style={{ ...btnConfirmStyle, opacity: (!slotElegido || cargando) ? 0.5 : 1, cursor: (!slotElegido || cargando) ? 'not-allowed' : 'pointer' }}
           >
-            {cargando ? 'Reprogramando...' : slotElegido ? `Confirmar — ${slotElegido.hora}` : 'Elegí un horario'}
+            {cargando ? 'Reprogramando...' : slotElegido ? `Confirmar — ${slotElegido.hora}` : 'Elige un horario'}
           </button>
         </div>
       </div>

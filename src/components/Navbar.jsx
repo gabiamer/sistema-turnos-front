@@ -1,5 +1,5 @@
-// Reemplaza la función Navbar completa con esta versión:
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
+import { personalStore } from '../store/personalStore'
 
 const linkStyle = (isActive) => ({
   color: isActive ? '#bfdbfe' : 'white',
@@ -8,7 +8,13 @@ const linkStyle = (isActive) => ({
 })
 
 function Navbar() {
-  const rol = sessionStorage.getItem('rol') ?? ''
+  const personal = personalStore.get()
+  const navigate = useNavigate()
+
+  const handleLogout = () => {
+    personalStore.logout()
+    navigate('/login-personal')
+  }
 
   return (
     <nav style={{
@@ -29,14 +35,37 @@ function Navbar() {
           <li><NavLink to="/" end style={({ isActive }) => linkStyle(isActive)}>Inicio</NavLink></li>
           <li><NavLink to="/buscar" style={({ isActive }) => linkStyle(isActive)}>Buscar Médico</NavLink></li>
           <li><NavLink to="/paciente/turnos" style={({ isActive }) => linkStyle(isActive)}>Mis Turnos</NavLink></li>
-          <li><NavLink to="/medico" style={({ isActive }) => linkStyle(isActive)}>Vista Médico</NavLink></li>
-          {rol === 'SECRETARIA' && (
+          {personal?.rol === 'MEDICO' && (
+            <li><NavLink to="/medico" style={({ isActive }) => linkStyle(isActive)}>Mi panel</NavLink></li>
+          )}
+          {personal?.rol === 'SECRETARIA' && (
             <li><NavLink to="/secretaria" style={({ isActive }) => linkStyle(isActive)}>Secretaría</NavLink></li>
           )}
-          {rol === 'ADMINISTRATIVO' && (
+          {personal?.rol === 'ADMINISTRATIVO' && (
             <li><NavLink to="/admin" style={({ isActive }) => linkStyle(isActive)}>Administración</NavLink></li>
           )}
         </ul>
+
+        {personal && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.85rem', whiteSpace: 'nowrap' }}>
+              {personal.nombre} · {personal.rol}
+            </span>
+            <button
+              onClick={handleLogout}
+              style={{
+                padding: '6px 14px', borderRadius: '8px',
+                border: '1.5px solid rgba(255,255,255,0.4)',
+                background: 'rgba(255,255,255,0.1)',
+                color: 'white', fontSize: '0.82rem',
+                cursor: 'pointer', fontFamily: 'inherit',
+                transition: 'background 0.18s',
+              }}
+            >
+              Cerrar sesión
+            </button>
+          </div>
+        )}
       </div>
     </nav>
   )
