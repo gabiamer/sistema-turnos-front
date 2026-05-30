@@ -1,7 +1,6 @@
 // src/components/CalendarioSemana.jsx
 
 function CalendarioSemana({ slots, onSlotClick }) {
-  // Asegurarse de que slots siempre sea un array
   const slotsArray = Array.isArray(slots) ? slots : []
 
   if (slotsArray.length === 0) {
@@ -30,7 +29,7 @@ function CalendarioSemana({ slots, onSlotClick }) {
         {fechas.map(fecha => (
           <div key={fecha}>
             <div style={{
-              backgroundColor: '#1e40af',
+              backgroundColor: '#4a7c9e',
               color: 'white',
               borderRadius: '8px 8px 0 0',
               padding: '0.4rem 0.5rem',
@@ -53,14 +52,15 @@ function CalendarioSemana({ slots, onSlotClick }) {
               borderRadius: '0 0 8px 8px',
             }}>
               {porFecha[fecha].map((slot, index) => {
-                const bloqueado = slot.bloqueado
-                const ocupado = !slot.disponible
-                const libre = !bloqueado && !ocupado
+                // API devuelve bloqueoActivo (no bloqueado)
+                const bloqueado = slot.bloqueoActivo
+                const ocupado   = !slot.disponible
+                const libre     = !bloqueado && !ocupado
 
-                let bg = '#22c55e'
-                let color = 'white'
+                let bg     = '#22c55e'
+                let color  = 'white'
                 let cursor = 'pointer'
-                let title = 'Disponible — click para reservar'
+                let title  = 'Disponible — click para reservar'
 
                 if (bloqueado) {
                   bg = '#94a3b8'; cursor = 'not-allowed'; title = 'Bloqueado por el médico'
@@ -72,6 +72,7 @@ function CalendarioSemana({ slots, onSlotClick }) {
                   <button
                     key={`${fecha}-${index}`}
                     title={title}
+                    aria-label={`${slot.hora} — ${libre ? 'disponible' : bloqueado ? 'bloqueado' : 'ocupado'}`}
                     disabled={!libre}
                     onClick={() => libre && onSlotClick && onSlotClick(slot)}
                     style={{

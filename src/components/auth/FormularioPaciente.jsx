@@ -1,35 +1,45 @@
 // src/components/auth/FormularioPaciente.jsx
 // Drop-in replacement — misma lógica, estética editorial pastel
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { pacienteService } from '../../services/pacienteService'
 import CampoInput from '../formulario/CampoInput'
 
 const fontImport = `@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap');`
 
 const FormularioPaciente = ({ ciInicial }) => {
+  const navigate = useNavigate()
   const [formData, setFormData] = useState({
     ci: ciInicial || '', nombre: '', apellido: '',
     fechaNacimiento: '', telefono: '', email: '',
   })
-  const [success, setSuccess] = useState(false)
+  const [pacienteRegistrado, setPacienteRegistrado] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [errorRegistro, setErrorRegistro] = useState('')
 
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value })
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
+    setErrorRegistro('')
     try {
-      await pacienteService.registrar(formData)
-      setSuccess(true)
+      const nuevo = await pacienteService.registrar(formData)
+      // Guardar en sessionStorage para que MisTurnos y el resto lo lean
+      sessionStorage.setItem('paciente', JSON.stringify(nuevo))
+      setPacienteRegistrado(nuevo)
     } catch (error) {
-      console.error(error)
+      if (error.response?.status === 409) {
+        setErrorRegistro('Ya existe un paciente con ese CI o email.')
+      } else {
+        setErrorRegistro('Error al registrar. Intentá de nuevo.')
+      }
     } finally {
       setLoading(false)
     }
   }
 
-  if (success) {
+  if (pacienteRegistrado) {
     return (
       <div style={cardBase}>
         <style>{fontImport}</style>
@@ -41,7 +51,13 @@ const FormularioPaciente = ({ ciInicial }) => {
             fontSize: '1.3rem', color: '#4a7c9e',
           }}>✓</div>
           <p style={{ ...titulo, fontSize: '1.1rem' }}>Paciente registrado</p>
-          <p style={subtitulo}>Ya podés continuar con tu turno.</p>
+          <p style={subtitulo}>Bienvenido/a, {pacienteRegistrado.nombre}.</p>
+          <button
+            onClick={() => navigate('/buscar')}
+            style={{ marginTop: '0.5rem', padding: '0.75rem 1.5rem', borderRadius: '50px', border: 'none', background: 'linear-gradient(135deg, #4a7c9e, #3a6282)', color: 'white', fontSize: '0.85rem', fontWeight: '500', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif" }}
+          >
+            Buscar un médico →
+          </button>
         </div>
       </div>
     )
@@ -67,6 +83,12 @@ const FormularioPaciente = ({ ciInicial }) => {
         <CampoInput name="email" label="Email" type="email" onChange={handleChange} placeholder="correo@ejemplo.com" required />
 
         <div style={{ height: '1px', backgroundColor: 'rgba(74,124,158,0.1)', margin: '0.25rem 0' }} />
+
+        {errorRegistro && (
+          <p style={{ color: '#dc2626', fontSize: '0.82rem', textAlign: 'center', margin: '0' }}>
+            ⚠ {errorRegistro}
+          </p>
+        )}
 
         <button
           type="submit"
