@@ -14,6 +14,11 @@ import BuscarMedico  from './pages/BuscarMedico'
 import MisTurnos     from './pages/MisTurnos'
 import CalendarioPage from './pages/CalendarioPage'
 
+import DashboardAdmin     from './pages/admin/DashboardAdmin'
+
+// Descomentar cuando Adri haga DashboardSecretaria osea nunca
+// import DashboardSecretaria from './pages/secretaria/DashboardSecretaria'
+
 function App() {
   return (
     <BrowserRouter>
@@ -30,6 +35,9 @@ function App() {
 
             <Route path="/medico"         element={<VistaMedico />} />
             <Route path="/paciente/turnos" element={<VistaPaciente />} />
+
+            <Route path="/admin"      element={<DashboardAdmin />} />
+            {/* <Route path="/secretaria" element={<DashboardSecretaria />} /> */}
           </Routes>
         </main>
       </div>
