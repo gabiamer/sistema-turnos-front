@@ -84,9 +84,9 @@ export default function GestionAgendaPage() {
             setMensaje('✅ Agenda guardada correctamente');
         } catch (err) {
             if (err.response?.status === 409) {
-                setError('⚠ Hay turnos confirmados en el horario que querés modificar. Reasignalos antes de cambiar la agenda.');
+                setError('⚠ Hay turnos confirmados en el horario que quieres modificar. Reasígnalos antes de cambiar la agenda.');
             } else {
-                setError('Error al guardar la agenda. Intentá de nuevo.');
+                setError('Error al guardar la agenda. Intenta de nuevo.');
             }
         } finally {
             setLoading(false);
@@ -95,7 +95,7 @@ export default function GestionAgendaPage() {
 
     const guardarBloqueo = async () => {
         if (!fechaInicio || !fechaFin) {
-            setMensajeBloqueo({ tipo: 'error', texto: 'Seleccioná un rango de fechas.' });
+            setMensajeBloqueo({ tipo: 'error', texto: 'Selecciona un rango de fechas.' });
             return;
         }
         setLoadingBloqueo(true);

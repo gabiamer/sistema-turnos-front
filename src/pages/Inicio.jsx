@@ -66,7 +66,7 @@ function Inicio() {
             fontSize: '0.9rem', color: '#4a7c9e', lineHeight: 1.8,
             maxWidth: '360px', fontWeight: '300', marginBottom: '2.5rem',
           }}>
-            Registrate una sola vez y reservá turnos con los mejores especialistas de forma rápida y sencilla.
+            Regístrate una sola vez y reserva turnos con los mejores especialistas de forma rápida y sencilla.
           </p>
 
           {/* Stats decorativos */}

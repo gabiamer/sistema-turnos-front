@@ -32,7 +32,7 @@ const FormularioPaciente = ({ ciInicial }) => {
       if (error.response?.status === 409) {
         setErrorRegistro('Ya existe un paciente con ese CI o email.')
       } else {
-        setErrorRegistro('Error al registrar. Intentá de nuevo.')
+        setErrorRegistro('Error al registrar. Intenta de nuevo.')
       }
     } finally {
       setLoading(false)
@@ -68,9 +68,9 @@ const FormularioPaciente = ({ ciInicial }) => {
       <style>{fontImport}</style>
 
       <p style={eyebrow}>Nuevo registro</p>
-      <h3 style={titulo}>Completá tus datos</h3>
+      <h3 style={titulo}>Completa tus datos</h3>
       <p style={{ ...subtitulo, marginBottom: '1.5rem' }}>
-        No encontramos tu perfil. Ingresá tu información para continuar.
+        No encontramos tu perfil. Ingresa tu información para continuar.
       </p>
 
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>

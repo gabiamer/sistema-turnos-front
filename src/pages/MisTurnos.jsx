@@ -35,7 +35,7 @@ function MisTurnos() {
     setLoading(true)
     turnoService.listar(paciente.id)
       .then(data => setTurnos(Array.isArray(data) ? data : []))
-      .catch(() => setError('No se pudieron cargar los turnos. Intentá más tarde.'))
+      .catch(() => setError('No se pudieron cargar los turnos. Intenta más tarde.'))
       .finally(() => setLoading(false))
   }, [paciente])
 
@@ -57,7 +57,7 @@ function MisTurnos() {
       } else if (err.response?.status === 403) {
         setErrorCancel('No estás autorizado a cancelar este turno.')
       } else {
-        setErrorCancel('Error al cancelar. Intentá de nuevo.')
+        setErrorCancel('Error al cancelar. Intenta de nuevo.')
       }
     } finally {
       setCancelando(null)
@@ -123,7 +123,7 @@ function MisTurnos() {
         {/* Sin paciente registrado */}
         {!paciente && (
           <div style={{ backgroundColor: 'rgba(255,255,255,0.55)', backdropFilter: 'blur(20px)', borderRadius: '24px', padding: '2rem', border: '1.5px solid rgba(255,255,255,0.85)', boxShadow: '0 8px 40px rgba(74,124,158,0.12)', color: '#4a7c9e', fontSize: '0.95rem', animation: 'fadeUp 0.5s ease 0.1s both', maxWidth: '480px' }}>
-            Primero registrá tus datos en la{' '}
+            Primero registra tus datos en la{' '}
             <a href="/login" style={{ color: '#4a7c9e', fontWeight: '600', textDecoration: 'underline' }}>
               página de inicio
             </a>{' '}
@@ -155,7 +155,7 @@ function MisTurnos() {
 
             {turnos.length === 0 ? (
               <div style={{ backgroundColor: 'rgba(255,255,255,0.55)', backdropFilter: 'blur(20px)', borderRadius: '24px', padding: '2.5rem', border: '1.5px solid rgba(255,255,255,0.85)', textAlign: 'center', color: '#7fa3b8', fontSize: '0.95rem', boxShadow: '0 8px 40px rgba(74,124,158,0.12)' }}>
-                No tenés turnos agendados aún.
+                No tienes turnos agendados aún.
               </div>
             ) : (
               <>
@@ -212,7 +212,7 @@ function MisTurnos() {
             </div>
 
             <p style={{ fontSize: '0.82rem', color: '#7fa3b8', marginBottom: '1.25rem', lineHeight: 1.6 }}>
-              Solo podés cancelar hasta 2 horas antes del turno.
+              Solo puedes cancelar hasta 2 horas antes del turno.
             </p>
 
             <label style={{ fontSize: '0.72rem', fontWeight: '500', color: '#4a7c9e', letterSpacing: '0.1em', textTransform: 'uppercase', display: 'block', marginBottom: '0.4rem' }}>
