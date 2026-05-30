@@ -7,6 +7,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useMedicoStore } from '../../store/medicoStore'
+import { personalStore } from '../../store/personalStore'
 import CalendarioMedico   from '../../components/medico/CalendarioMedico'
 import PanelCita          from '../../components/medico/PanelCita'
 import ModalReprogramar   from '../../components/medico/ModalReprogramar'
@@ -14,10 +15,6 @@ import ModalCancelar      from '../../components/medico/ModalCancelar'
 import Toast              from '../../components/medico/Toast'
 import { medicoService }  from '../../services/medicoService'
 import { turnoService }   from '../../services/turnoService'
-
-// ID del médico logueado — en una app real vendría del contexto de autenticación.
-// Por ahora se hardcodea 1 (primer médico del DataSeeder).
-const MEDICO_ID = 1
 
 function getLunesActual() {
   const hoy = new Date()
@@ -33,6 +30,10 @@ function toISO(fecha) {
 }
 
 export default function VistaMedico() {
+  // ProtectedRoute garantiza que personal existe y tiene rol MEDICO
+  const personal = personalStore.get()
+  const medicoId = personal?.medicoId ?? 1
+
   const {
     slots, setSlots, loading, setLoading, error, setError,
     citaSeleccionada, seleccionarCita, cerrarPanel,
@@ -48,10 +49,10 @@ export default function VistaMedico() {
 
   // Cargar perfil del médico
   useEffect(() => {
-    medicoService.getById(MEDICO_ID)
+    medicoService.getById(medicoId)
       .then(setMedico)
       .catch(() => setError('No se pudo cargar el perfil del médico.'))
-  }, [setError])
+  }, [setError]) // medicoId es estable durante la sesión
 
   // Cargar agenda semanal enriquecida
   const cargarAgenda = useCallback(() => {
@@ -132,9 +133,6 @@ export default function VistaMedico() {
       {/* Header */}
       <div style={{ background: 'white', borderBottom: '1px solid #e2e8f0', padding: '20px 24px' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-          <p style={{ fontSize: 11, fontWeight: 600, color: '#2563eb', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 4 }}>
-            Vista del médico
-          </p>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
             <div>
               <h1 style={{ fontSize: 22, fontWeight: 700, color: '#1e293b', margin: 0 }}>

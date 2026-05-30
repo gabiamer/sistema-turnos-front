@@ -25,6 +25,19 @@ export const medicoService = {
     return response.data
   },
 
+  // Busca un médico por CI cargando la lista completa y filtrando localmente
+  buscarPorCi: async (ci) => {
+    const response = await axiosInstance.get('/api/medicos')
+    const todos = Array.isArray(response.data) ? response.data : []
+    const encontrado = todos.find(m => String(m.ci) === String(ci))
+    if (!encontrado) {
+      const err = new Error('Médico no encontrado')
+      err.response = { status: 404 }
+      throw err
+    }
+    return encontrado
+  },
+
   // GET /api/medicos/{id}/agenda-semana?semana=YYYY-MM-DD
   // Usado por la vista del médico (VistaMedico).
   // Devuelve slots enriquecidos:
