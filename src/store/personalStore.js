@@ -21,4 +21,14 @@ export const personalStore = {
   isLoggedIn: () => !!getStored(),
 
   getRol: () => getStored()?.rol || null,
+
+  getMedicoId: () => {
+    try {
+      const raw = sessionStorage.getItem('sesion')
+      if (!raw) return null
+      const s = JSON.parse(raw)
+      return s?.rol === 'MEDICO' ? s.id : null
+    } catch { return null }
+  },
+
 }

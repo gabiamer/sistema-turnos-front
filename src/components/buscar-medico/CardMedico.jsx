@@ -1,4 +1,4 @@
-// src/components/buscar-medico/CardMedicoV2.jsx
+// src/components/buscar-medico/CardMedico.jsx
 import { useState } from 'react'
 
 function Estrellas({ rating }) {
@@ -25,7 +25,7 @@ const INITIALS_COLOR = [
   '#3a6e8a', '#2e6e5a', '#6a4a8a', '#8a6a3a', '#3a4e8a', '#8a3a42'
 ]
 
-function CardMedicoV2({ medico, onVerDisponibilidad }) {
+function CardMedico({ medico, onVerDisponibilidad }) {
   const [hovered, setHovered] = useState(false)
   const idx = medico.id % INITIALS_BG.length
   const rating = 3.5 + (medico.id * 0.3) % 1.5
@@ -135,4 +135,4 @@ function CardMedicoV2({ medico, onVerDisponibilidad }) {
   )
 }
 
-export default CardMedicoV2
+export default CardMedico

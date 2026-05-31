@@ -12,6 +12,14 @@ const LINKS_MEDICO = [
   { to: '/agenda', label: 'Configurar agenda' },
 ]
 
+const LINKS_SECRETARIA = [
+  { to: '/secretaria', label: 'Panel secretaría' },
+]
+
+const LINKS_ADMINISTRATIVO = [
+  { to: '/admin', label: 'Dashboard admin' },
+]
+
 function getSesion() {
   try {
     const raw = sessionStorage.getItem('sesion')
@@ -19,26 +27,62 @@ function getSesion() {
   } catch { return null }
 }
 
+function getPersonal() {
+  try {
+    const raw = sessionStorage.getItem('personal')
+    return raw ? JSON.parse(raw) : null
+  } catch { return null }
+}
+
 export default function Navbar() {
-  const [sesion, setSesion] = useState(getSesion)
+  const [sesion,   setSesion]   = useState(getSesion)
+  const [personal, setPersonal] = useState(getPersonal)
   const navigate = useNavigate()
 
   useEffect(() => {
-    const sync = () => setSesion(getSesion())
+    const sync = () => {
+      setSesion(getSesion())
+      setPersonal(getPersonal())
+    }
     window.addEventListener('storage', sync)
-    return () => window.removeEventListener('storage', sync)
+    // También sincroniza cuando cambia sessionStorage en la misma pestaña
+    const interval = setInterval(sync, 500)
+    return () => { window.removeEventListener('storage', sync); clearInterval(interval) }
   }, [])
 
-  const links = sesion?.rol === 'MEDICO'   ? LINKS_MEDICO
-              : sesion?.rol === 'PACIENTE' ? LINKS_PACIENTE
-              : []
+  // Personal interno tiene prioridad sobre sesión de paciente
+  const usuario = personal || sesion
+  const rol     = usuario?.rol ?? null
+
+  const links =
+    rol === 'MEDICO'         ? LINKS_MEDICO :
+    rol === 'PACIENTE'       ? LINKS_PACIENTE :
+    rol === 'SECRETARIA'     ? LINKS_SECRETARIA :
+    rol === 'ADMINISTRATIVO' ? LINKS_ADMINISTRATIVO :
+    []
 
   const handleLogout = () => {
     sessionStorage.removeItem('sesion')
     sessionStorage.removeItem('paciente')
+    sessionStorage.removeItem('personal')
     setSesion(null)
+    setPersonal(null)
     navigate('/', { replace: true })
   }
+
+  // Badge visual por rol
+  const rolBadge = {
+    MEDICO:         { label: '⚕ Médico',      color: '#4a7c9e', bg: 'rgba(74,124,158,0.1)',   border: 'rgba(74,124,158,0.25)' },
+    PACIENTE:       { label: '👤 Paciente',    color: '#16a34a', bg: 'rgba(34,197,94,0.1)',    border: 'rgba(34,197,94,0.25)'  },
+    SECRETARIA:     { label: '📋 Secretaría',  color: '#b45309', bg: 'rgba(180,83,9,0.08)',    border: 'rgba(180,83,9,0.25)'   },
+    ADMINISTRATIVO: { label: '📊 Admin',       color: '#7c3aed', bg: 'rgba(124,58,237,0.08)',  border: 'rgba(124,58,237,0.25)' },
+  }[rol] ?? null
+
+  const logoHref =
+    rol === 'MEDICO'         ? '/medico' :
+    rol === 'SECRETARIA'     ? '/secretaria' :
+    rol === 'ADMINISTRATIVO' ? '/admin' :
+    sesion                   ? '/buscar' : '/'
 
   return (
     <nav style={{
@@ -63,7 +107,7 @@ export default function Navbar() {
 
         {/* Logo */}
         <NavLink
-          to={sesion?.rol === 'MEDICO' ? '/medico' : sesion ? '/buscar' : '/'}
+          to={logoHref}
           style={{ display:'flex', alignItems:'center', gap:'0.6rem', textDecoration:'none' }}
         >
           <div style={{
@@ -102,20 +146,22 @@ export default function Navbar() {
         )}
 
         {/* CTA derecha */}
-        {sesion ? (
+        {usuario ? (
           <div style={{ display:'flex', alignItems:'center', gap:'0.6rem' }}>
-            <span style={{
-              fontSize:'0.72rem', fontWeight:600,
-              color: sesion.rol === 'MEDICO' ? '#4a7c9e' : '#16a34a',
-              background: sesion.rol === 'MEDICO' ? 'rgba(74,124,158,0.1)' : 'rgba(34,197,94,0.1)',
-              border: `1px solid ${sesion.rol === 'MEDICO' ? 'rgba(74,124,158,0.25)' : 'rgba(34,197,94,0.25)'}`,
-              borderRadius:50, padding:'2px 10px',
-              letterSpacing:'0.06em', textTransform:'uppercase',
-            }}>
-              {sesion.rol === 'MEDICO' ? '⚕ Médico' : '👤 Paciente'}
-            </span>
+            {rolBadge && (
+              <span style={{
+                fontSize:'0.72rem', fontWeight:600,
+                color: rolBadge.color,
+                background: rolBadge.bg,
+                border: `1px solid ${rolBadge.border}`,
+                borderRadius:50, padding:'2px 10px',
+                letterSpacing:'0.06em', textTransform:'uppercase',
+              }}>
+                {rolBadge.label}
+              </span>
+            )}
             <span style={{ fontSize:'0.8rem', color:'#4a7c9e', fontWeight:'500', maxWidth:140, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
-              {sesion.nombre}
+              {usuario.nombre}
             </span>
             <button onClick={handleLogout} style={{
               padding:'0.45rem 1rem', borderRadius:'50px',
@@ -132,7 +178,7 @@ export default function Navbar() {
             </button>
           </div>
         ) : (
-          /* Sin sesión: dos botones — Registrarse (home) e Iniciar sesión (login) */
+          /* Sin sesión */
           <div style={{ display:'flex', gap:'0.5rem', alignItems:'center' }}>
             <NavLink to="/" style={({ isActive }) => ({
               padding:'0.45rem 1rem', borderRadius:'50px',

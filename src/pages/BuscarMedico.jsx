@@ -5,20 +5,11 @@ import { disponibilidadService } from '../services/disponibilidadService'
 
 import SearchBar        from '../components/buscar-medico/SearchBar'
 import FiltrosEspecialidad from '../components/buscar-medico/FiltrosEspecialidad'
-import ListaMedicosV2   from '../components/buscar-medico/ListaMedicosV2'
+import ListaMedicos   from '../components/buscar-medico/ListaMedicos'
 import CalendarioSemana    from '../components/CalendarioSemana'
 import MedicosAlternativos from '../components/MedicosAlternativos'
 import ModalTurno          from '../components/ModalTurno'
-
-function getLunes(fecha) {
-  const d = new Date(fecha)
-  const dia = d.getDay()
-  const diff = dia === 0 ? -6 : 1 - dia
-  d.setDate(d.getDate() + diff)
-  d.setHours(0,0,0,0)
-  return d
-}
-function toISO(fecha) { return fecha.toISOString().slice(0,10) }
+import { getLunes, toISO } from '../utils/fecha'
 
 function BuscarMedico() {
   const [medicos, setMedicos]                       = useState([])
@@ -135,7 +126,7 @@ function BuscarMedico() {
           )}
         </div>
 
-        <ListaMedicosV2 medicos={medicosFiltrados} onVerDisponibilidad={handleVerDisponibilidad} />
+        <ListaMedicos medicos={medicosFiltrados} onVerDisponibilidad={handleVerDisponibilidad} />
       </div>
 
       {modalAbierto && medicoSeleccionado && (

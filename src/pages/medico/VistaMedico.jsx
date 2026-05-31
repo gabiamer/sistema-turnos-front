@@ -12,26 +12,9 @@ import ModalCancelar         from '../../components/medico/ModalCancelar'
 import Toast                 from '../../components/medico/Toast'
 import { medicoService }     from '../../services/medicoService'
 import { turnoService }      from '../../services/turnoService'
-
-function getLunesActual() {
-  const hoy = new Date()
-  const dia = hoy.getDay()
-  const diff = dia === 0 ? -6 : 1 - dia
-  hoy.setDate(hoy.getDate() + diff)
-  hoy.setHours(0, 0, 0, 0)
-  return hoy
-}
-function toISO(fecha) { return fecha.toISOString().split('T')[0] }
-
-// Leer medicoId desde sessionStorage
-function getMedicoIdSesion() {
-  try {
-    const raw = sessionStorage.getItem('sesion')
-    if (!raw) return null
-    const s = JSON.parse(raw)
-    return s?.rol === 'MEDICO' ? s.id : null
-  } catch { return null }
-}
+import { getLunes, toISO } from '../../utils/fecha'
+import { Spinner, BannerError } from '../../components/medico/Spinner'
+import { personalStore } from '../../store/personalStore'
 
 export default function VistaMedico() {
   const navigate = useNavigate()
@@ -41,10 +24,10 @@ export default function VistaMedico() {
     actualizarEstadoTurno, liberarSlot, reprogramarTurno,
   } = useMedicoStore()
 
-  const medicoId = getMedicoIdSesion()
+  const medicoId = personalStore.getMedicoId()
 
   const [medico, setMedico]               = useState(null)
-  const [semanaBase, setSemanaBase]       = useState(getLunesActual)
+  const [semanaBase, setSemanaBase] = useState(() => getLunes())
   const [loadingAccion, setLoadingAccion] = useState(false)
   const [toast, setToast]                 = useState(null)
 
@@ -240,54 +223,6 @@ export default function VistaMedico() {
       )}
 
       {toast && <Toast mensaje={toast.mensaje} tipo={toast.tipo} onCerrar={() => setToast(null)} />}
-    </div>
-  )
-}
-
-// ── Componentes auxiliares exportados (usados por VistaPaciente) ─────────────
-
-export function Spinner({ label = 'Cargando...' }) {
-  return (
-    <div style={{ display:'flex', alignItems:'center', gap:10, padding:'20px 0', color:'var(--color-texto-muted)', fontSize:13 }}>
-      <div style={{
-        width:18, height:18,
-        border:'2px solid var(--color-borde-suave)',
-        borderTopColor:'var(--color-primario)',
-        borderRadius:'50%',
-        animation:'spin 0.7s linear infinite',
-        flexShrink:0,
-      }} />
-      <style>{`@keyframes spin { to { transform:rotate(360deg) } }`}</style>
-      {label}
-    </div>
-  )
-}
-
-export function BannerError({ mensaje, onReintentar }) {
-  return (
-    <div style={{
-      padding:      '12px 16px',
-      background:   'rgba(239,68,68,0.06)',
-      border:       '1px solid rgba(239,68,68,0.2)',
-      borderRadius: 'var(--radio-md)',
-      color:        '#dc2626', fontSize:13,
-      display:'flex', alignItems:'center', gap:12,
-    }}>
-      ⚠ {mensaje}
-      {onReintentar && (
-        <button
-          onClick={onReintentar}
-          style={{
-            marginLeft:'auto', background:'white',
-            border:'1px solid rgba(239,68,68,0.3)',
-            borderRadius:'var(--radio-sm)',
-            color:'#dc2626', fontSize:12, padding:'4px 10px',
-            cursor:'pointer', fontFamily:'inherit',
-          }}
-        >
-          Reintentar
-        </button>
-      )}
     </div>
   )
 }

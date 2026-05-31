@@ -1,7 +1,7 @@
-// src/components/buscar-medico/ListaMedicosV2.jsx
-import CardMedicoV2 from './CardMedicoV2'
+// src/components/buscar-medico/ListaMedicos.jsx
+import CardMedico from './CardMedico'
 
-function ListaMedicosV2({ medicos, onVerDisponibilidad }) {
+function ListaMedicos({ medicos, onVerDisponibilidad }) {
   if (medicos.length === 0) {
     return (
       <div style={{
@@ -43,7 +43,7 @@ function ListaMedicosV2({ medicos, onVerDisponibilidad }) {
               animationDelay: `${i * 0.07}s`,
             }}
           >
-            <CardMedicoV2 medico={medico} onVerDisponibilidad={onVerDisponibilidad} />
+            <CardMedico medico={medico} onVerDisponibilidad={onVerDisponibilidad} />
           </div>
         ))}
       </div>
@@ -51,4 +51,4 @@ function ListaMedicosV2({ medicos, onVerDisponibilidad }) {
   )
 }
 
-export default ListaMedicosV2
+export default ListaMedicos

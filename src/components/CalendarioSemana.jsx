@@ -53,7 +53,7 @@ function CalendarioSemana({ slots, onSlotClick }) {
             }}>
               {porFecha[fecha].map((slot, index) => {
                 // API devuelve bloqueoActivo (no bloqueado)
-                const bloqueado = slot.bloqueoActivo
+                const bloqueado = slot.bloqueado
                 const ocupado   = !slot.disponible
 
                 // Verificar si el slot ya pasó (fecha+hora menores al momento actual)

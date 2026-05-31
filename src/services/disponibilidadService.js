@@ -1,17 +1,6 @@
 // src/services/disponibilidadService.js
 import axiosInstance from './axiosInstance'
-
-/**
- * Devuelve la fecha del lunes de la semana actual más un offset de semanas.
- * Ej: offset=0 → lunes de esta semana; offset=1 → lunes de la próxima semana.
- */
-function getLunesStr(offset = 0) {
-  const hoy = new Date()
-  const dia = hoy.getDay()
-  const diff = dia === 0 ? -6 : 1 - dia
-  hoy.setDate(hoy.getDate() + diff + offset * 7)
-  return hoy.toISOString().split('T')[0]
-}
+import { getLunesStr } from '../utils/fecha'
 
 export const disponibilidadService = {
 

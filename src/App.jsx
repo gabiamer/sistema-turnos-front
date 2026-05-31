@@ -3,27 +3,41 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import './App.css'
 import './index.css'
 
-import LoginPage         from './pages/auth/LoginPage'
-import LoginPersonal     from './pages/auth/LoginPersonal'
-import GestionAgendaPage from './pages/agenda/GestionAgendaPage'
-import VistaMedico       from './pages/medico/VistaMedico'
-import VistaPaciente     from './pages/medico/VistaPaciente'
-import Navbar            from './components/Navbar'
-import BuscarMedico      from './pages/BuscarMedico'
-import Inicio            from './pages/Inicio'
+import LoginPage            from './pages/auth/LoginPage'
+import GestionAgendaPage    from './pages/agenda/GestionAgendaPage'
+import VistaMedico          from './pages/medico/VistaMedico'
+import VistaPaciente        from './pages/paciente/VistaPaciente'
+import Navbar               from './components/Navbar'
+import BuscarMedico         from './pages/BuscarMedico'
+import Inicio               from './pages/Inicio'
+import DashboardSecretaria  from './pages/secretaria/DashboardSecretaria'
+import DashboardAdmin       from './pages/admin/DashboardAdmin'
 
 function getSesion() {
-  try {
-    const raw = sessionStorage.getItem('sesion')
-    return raw ? JSON.parse(raw) : null
-  } catch { return null }
+  try { return JSON.parse(sessionStorage.getItem('sesion'))  } catch { return null }
+}
+function getPersonal() {
+  try { return JSON.parse(sessionStorage.getItem('personal')) } catch { return null }
 }
 
+// Protege rutas de paciente/médico
 function RutaProtegida({ children, rolRequerido }) {
   const sesion = getSesion()
   if (!sesion) return <Navigate to="/login" replace />
-  if (rolRequerido && sesion.rol !== rolRequerido) {
+  if (rolRequerido && sesion.rol !== rolRequerido)
     return <Navigate to={sesion.rol === 'MEDICO' ? '/medico' : '/buscar'} replace />
+  return children
+}
+
+// Protege rutas de personal interno (secretaría / admin)
+function RutaPersonal({ children, rolRequerido }) {
+  const personal = getPersonal()
+  if (!personal) return <Navigate to="/login" replace />
+  if (rolRequerido && personal.rol !== rolRequerido) {
+    if (personal.rol === 'SECRETARIA')     return <Navigate to="/secretaria" replace />
+    if (personal.rol === 'ADMINISTRATIVO') return <Navigate to="/admin"       replace />
+    if (personal.rol === 'MEDICO')         return <Navigate to="/medico"      replace />
+    return <Navigate to="/" replace />
   }
   return children
 }
@@ -35,11 +49,11 @@ function App() {
         <Navbar />
         <main className="app-contenido">
           <Routes>
-            {/* Home: página de inicio con hero + formulario de registro */}
-            <Route path="/" element={<Inicio />} />
-
-            {/* Login: solo para quien ya tiene cuenta */}
+            <Route path="/"      element={<Inicio />} />
             <Route path="/login" element={<LoginPage />} />
+
+            {/* login-personal ahora es el mismo login (tab Personal) */}
+            <Route path="/login-personal" element={<Navigate to="/login" replace />} />
 
             {/* Paciente */}
             <Route path="/buscar" element={
@@ -56,6 +70,16 @@ function App() {
             }/>
             <Route path="/agenda" element={
               <RutaProtegida rolRequerido="MEDICO"><GestionAgendaPage /></RutaProtegida>
+            }/>
+
+            {/* Secretaría */}
+            <Route path="/secretaria" element={
+              <RutaPersonal rolRequerido="SECRETARIA"><DashboardSecretaria /></RutaPersonal>
+            }/>
+
+            {/* Admin */}
+            <Route path="/admin" element={
+              <RutaPersonal rolRequerido="ADMINISTRATIVO"><DashboardAdmin /></RutaPersonal>
             }/>
 
             <Route path="*" element={<Navigate to="/" replace />} />
