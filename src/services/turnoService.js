@@ -61,9 +61,4 @@ export const turnoService = {
     return response.data
   },
 
-  // GET /api/turnos?medicoId= (si el back lo soporta en el futuro)
-  listarPorMedico: async (medicoId) => {
-    const response = await axiosInstance.get(`/api/turnos?medicoId=${medicoId}`)
-    return response.data
-  },
 }

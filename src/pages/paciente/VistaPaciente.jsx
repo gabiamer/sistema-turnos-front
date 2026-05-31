@@ -1,4 +1,4 @@
-// src/pages/medico/VistaPaciente.jsx
+// src/pages/paciente/VistaPaciente.jsx
 // Mis Turnos del paciente — estética editorial pastel.
 // Lee pacienteId de sessionStorage (guardado en LoginPage tras buscar por CI).
 
@@ -6,9 +6,9 @@ import { useState, useEffect, useCallback } from 'react'
 import { turnoService }    from '../../services/turnoService'
 import { getEstiloEstado } from '../../utils/mapEstado'
 import Toast               from '../../components/medico/Toast'
-import { Spinner, BannerError } from './VistaMedico'
+import { Spinner, BannerError } from '../../components/medico/Spinner'
 
-const CANCELABLES = new Set(['CONFIRMADO', 'PENDIENTE', 'PROGRAMADA', 'BLOQUEADO'])
+const CANCELABLES = new Set(['CONFIRMADO', 'PENDIENTE', 'BLOQUEADO'])
 
 const fontImport = `@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap');`
 

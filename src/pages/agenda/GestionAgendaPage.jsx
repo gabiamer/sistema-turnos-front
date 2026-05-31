@@ -6,6 +6,8 @@ import { useState, useEffect } from 'react'
 import { useNavigate }         from 'react-router-dom'
 import { agendaService }       from '../../services/agendaService'
 import { medicoService }       from '../../services/medicoService'
+import { personalStore } from '../../store/personalStore'
+
 
 const DIAS = [
   { label: 'Lunes',     value: 1 },
@@ -19,18 +21,9 @@ const DIAS = [
 
 const DURACIONES = [15, 20, 30, 45, 60]
 
-function getMedicoIdSesion() {
-  try {
-    const raw = sessionStorage.getItem('sesion')
-    if (!raw) return null
-    const s = JSON.parse(raw)
-    return s?.rol === 'MEDICO' ? s.id : null
-  } catch { return null }
-}
-
 export default function GestionAgendaPage() {
   const navigate   = useNavigate()
-  const medicoId   = getMedicoIdSesion()
+  const medicoId = personalStore.getMedicoId()
 
   const [medico, setMedico]                       = useState(null)
   const [diasSeleccionados, setDiasSeleccionados] = useState({})

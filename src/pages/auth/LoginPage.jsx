@@ -1,231 +1,249 @@
 // src/pages/auth/LoginPage.jsx
+// Un solo login con 3 tabs: Paciente · Médico · Personal (secretaría/admin)
 import { useState, useEffect } from 'react'
 import { useNavigate }         from 'react-router-dom'
 import { pacienteService }     from '../../services/pacienteService'
 import { medicoService }       from '../../services/medicoService'
+import { personalStore }       from '../../store/personalStore'
+import CampoInput              from '../../components/formulario/CampoInput'
+
+const USUARIOS_DEMO = [
+  { email: 'maria.lopez@clinica.com', password: 'secretaria123', rol: 'SECRETARIA',     nombre: 'María López'      },
+  { email: 'carlos.ruiz@clinica.com', password: 'secretaria123', rol: 'SECRETARIA',     nombre: 'Carlos Ruiz'      },
+  { email: 'admin@clinica.com',       password: 'admin123',      rol: 'ADMINISTRATIVO', nombre: 'Director Clínica' },
+  { email: 'medico@clinica.com',      password: 'medico123',     rol: 'MEDICO',         nombre: 'Dr. Médico', medicoId: 1 },
+]
+
+const TABS = [
+  { key: 'PACIENTE',  label: 'Paciente'  },
+  { key: 'MEDICO',    label: 'Médico'    },
+  { key: 'PERSONAL',  label: 'Personal'  },
+]
 
 export default function LoginPage() {
   const navigate = useNavigate()
 
-  const [rol, setRol]         = useState('PACIENTE')
-  const [ci, setCi]           = useState('')
+  const [tab, setTab]           = useState('PACIENTE')
+  const [ci, setCi]             = useState('')
   const [medicoId, setMedicoId] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError]     = useState('')
-  const [focused, setFocused] = useState(false)
+  const [email, setEmail]       = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading]   = useState(false)
+  const [error, setError]       = useState('')
 
   useEffect(() => {
     document.body.style.overflow = 'hidden'
     return () => { document.body.style.overflow = 'auto' }
   }, [])
 
-  const cambiarRol = (nuevoRol) => {
-    setRol(nuevoRol)
-    setCi(''); setMedicoId(''); setError('')
-  }
+  const cambiarTab = (t) => { setTab(t); setError('') }
 
-  // ── Ingreso como PACIENTE ────────────────────────────────────────────────
+  // ── Paciente ──────────────────────────────────────────────────────────────
   const handlePaciente = async (e) => {
     e.preventDefault()
     setLoading(true); setError('')
     try {
-      const data = await pacienteService.buscarPorCi(ci)
+      const data   = await pacienteService.buscarPorCi(ci)
       const sesion = { rol: 'PACIENTE', nombre: data.nombre, ...data }
       sessionStorage.setItem('sesion',   JSON.stringify(sesion))
       sessionStorage.setItem('paciente', JSON.stringify(data))
       window.dispatchEvent(new Event('storage'))
       navigate('/buscar')
     } catch (err) {
-      if (err.response?.status === 404)
-        setError('CI no encontrado. ¿Todavía no te registraste?')
-      else
-        setError('Error al conectar con el servidor.')
+      setError(err.response?.status === 404
+        ? 'CI no encontrado. ¿Todavía no te registraste?'
+        : 'Error al conectar con el servidor.')
     } finally { setLoading(false) }
   }
 
-  // ── Ingreso como MÉDICO ──────────────────────────────────────────────────
+  // ── Médico ────────────────────────────────────────────────────────────────
   const handleMedico = async (e) => {
     e.preventDefault()
     if (!medicoId.trim()) { setError('Ingresá tu ID de médico.'); return }
     setLoading(true); setError('')
     try {
-      const data = await medicoService.getById(Number(medicoId))
+      const data   = await medicoService.getById(Number(medicoId))
       const sesion = { rol: 'MEDICO', nombre: `${data.nombre} ${data.apellido}`, id: data.id, ...data }
       sessionStorage.setItem('sesion', JSON.stringify(sesion))
       window.dispatchEvent(new Event('storage'))
       navigate('/medico')
     } catch (err) {
-      if (err.response?.status === 404) setError('Médico no encontrado. Verificá tu ID.')
-      else setError('Error al conectar con el servidor.')
+      setError(err.response?.status === 404
+        ? 'Médico no encontrado. Verificá tu ID.'
+        : 'Error al conectar con el servidor.')
     } finally { setLoading(false) }
+  }
+
+  // ── Personal interno ──────────────────────────────────────────────────────
+  const handlePersonal = (e) => {
+    e.preventDefault()
+    const usuario = USUARIOS_DEMO.find(u => u.email === email && u.password === password)
+    if (!usuario) { setError('Email o contraseña incorrectos.'); return }
+    personalStore.login({
+      id:     null,
+      email:  usuario.email,
+      rol:    usuario.rol,
+      nombre: usuario.nombre,
+      ...(usuario.medicoId != null && { medicoId: usuario.medicoId }),
+    })
+    if (usuario.rol === 'SECRETARIA')     navigate('/secretaria')
+    if (usuario.rol === 'MEDICO')         navigate('/medico')
+    if (usuario.rol === 'ADMINISTRATIVO') navigate('/admin')
   }
 
   return (
     <div style={{
-      position:   'fixed', inset: 0,
+      position: 'fixed', inset: 0,
       background: '#c8dde8',
       backgroundImage: `
         radial-gradient(ellipse at 0% 0%,    rgba(180,210,228,0.6) 0%, transparent 60%),
         radial-gradient(ellipse at 100% 100%, rgba(195,218,232,0.5) 0%, transparent 55%),
         radial-gradient(ellipse at 60%  20%,  rgba(220,234,243,0.4) 0%, transparent 40%)
       `,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      padding: '1.25rem', fontFamily: "'DM Sans','Helvetica Neue',sans-serif",
+      fontFamily: "'DM Sans','Helvetica Neue',sans-serif",
       overflowY: 'auto',
     }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap');
         @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
-        .li-input:focus { border-color:rgba(122,176,200,0.9)!important; box-shadow:0 4px 24px rgba(74,124,158,0.18)!important; }
       `}</style>
 
-      {/* Decoración */}
-      <div style={{ position:'absolute', top:'10%', left:'8%', width:260, height:260, borderRadius:'50%', background:'rgba(255,255,255,0.18)', pointerEvents:'none' }} />
-      <div style={{ position:'absolute', bottom:'12%', right:'6%', width:180, height:180, borderRadius:'50%', background:'rgba(255,255,255,0.12)', pointerEvents:'none' }} />
+      <div style={{ position:'absolute', top:'8%',  left:'5%',  width:300, height:300, borderRadius:'50%', background:'rgba(255,255,255,0.18)', pointerEvents:'none' }} />
+      <div style={{ position:'absolute', bottom:'10%', right:'4%', width:200, height:200, borderRadius:'50%', background:'rgba(255,255,255,0.12)', pointerEvents:'none' }} />
 
-      {/* Card */}
+      {/* Layout dos columnas — igual que Inicio.jsx */}
       <div style={{
-        width:'100%', maxWidth:480,
-        background:'rgba(255,255,255,0.72)', backdropFilter:'blur(20px)',
-        borderRadius:28, border:'1.5px solid rgba(255,255,255,0.9)',
-        boxShadow:'0 16px 60px rgba(74,124,158,0.18)',
-        padding:'clamp(1.75rem,5vw,2.75rem)',
-        animation:'fadeUp 0.5s ease both', position:'relative', zIndex:1,
+        maxWidth: '1400px', margin: '0 auto',
+        padding: 'clamp(2.5rem,5vw,4rem) clamp(2rem,5vw,4rem)',
+        minHeight: '100vh',
+        display: 'grid',
+        gridTemplateColumns: 'minmax(0,1.1fr) minmax(0,0.9fr)',
+        gap: 'clamp(2rem,5vw,5rem)',
+        alignItems: 'center',
       }}>
 
-        {/* Header */}
-        <p style={{ fontSize:'0.7rem', fontWeight:500, color:'#4a7c9e', letterSpacing:'0.14em', textTransform:'uppercase', marginBottom:'0.6rem' }}>
-          Portal de salud — Turnos online
-        </p>
-        <h1 style={{ fontFamily:"'DM Serif Display',Georgia,serif", fontSize:'clamp(1.8rem,4vw,2.4rem)', fontWeight:400, color:'#1c3545', lineHeight:1.15, letterSpacing:'-0.02em', margin:'0 0 0.6rem' }}>
-          Bienvenido/a a<br />
-          <em style={{ fontStyle:'italic', color:'#4a7c9e' }}>MediTurnos.</em>
-        </h1>
-        <p style={{ fontSize:'0.88rem', color:'#7fa3b8', lineHeight:1.6, fontWeight:300, margin:'0 0 1.5rem' }}>
-          Seleccioná cómo querés ingresar al sistema.
-        </p>
-
-        {/* Selector de rol */}
-        <div style={{ display:'flex', background:'rgba(74,124,158,0.08)', borderRadius:50, padding:4, marginBottom:'1.75rem', gap:4 }}>
-          {[
-            { key:'PACIENTE', label:'Soy paciente' },
-            { key:'MEDICO',   label:'Soy médico'   },
-          ].map(({ key, label }) => (
-            <button
-              key={key}
-              onClick={() => cambiarRol(key)}
-              style={{
-                flex:1, padding:'0.55rem 1rem', borderRadius:50, border:'none',
-                background: rol === key ? '#4a7c9e' : 'transparent',
-                color:      rol === key ? '#fff'    : '#4a7c9e',
-                fontFamily: "'DM Sans',sans-serif",
-                fontSize:'0.83rem', fontWeight: rol === key ? 600 : 400,
-                cursor:'pointer', transition:'all 0.2s',
-                boxShadow: rol === key ? '0 4px 14px rgba(74,124,158,0.25)' : 'none',
-              }}
-            >
-              {label}
-            </button>
-          ))}
+        {/* ── Izquierda: hero ── */}
+        <div style={{ animation: 'fadeUp 0.5s ease both' }}>
+          <p style={{ fontSize:'0.72rem', fontWeight:500, color:'#4a7c9e', letterSpacing:'0.14em', textTransform:'uppercase', marginBottom:'1rem' }}>
+            Portal de salud — Turnos online
+          </p>
+          <h1 style={{ fontFamily:"'DM Serif Display',Georgia,serif", fontSize:'clamp(2rem,4.5vw,3.5rem)', fontWeight:400, color:'#1c3545', lineHeight:1.1, letterSpacing:'-0.02em', margin:'0 0 1.5rem' }}>
+            Bienvenido/a<br />de nuevo a{' '}
+            <em style={{ fontStyle:'italic', color:'#4a7c9e' }}>MediTurnos.</em>
+          </h1>
+          <p style={{ fontSize:'0.9rem', color:'#4a7c9e', lineHeight:1.8, maxWidth:'360px', fontWeight:300, marginBottom:'2.5rem' }}>
+            Ingresá según tu rol para acceder al sistema de turnos.
+          </p>
+          <div style={{ display:'flex', gap:'2rem', flexWrap:'wrap' }}>
+            {[{ num:'6+', label:'Especialidades' }, { num:'100%', label:'Online' }, { num:'24/7', label:'Disponible' }].map(({ num, label }) => (
+              <div key={label}>
+                <p style={{ fontFamily:"'DM Serif Display',Georgia,serif", fontSize:'1.6rem', color:'#1c3545', margin:'0 0 0.1rem', fontWeight:400 }}>{num}</p>
+                <p style={{ fontSize:'0.72rem', color:'#7fa3b8', margin:0, letterSpacing:'0.08em', textTransform:'uppercase' }}>{label}</p>
+              </div>
+            ))}
+          </div>
         </div>
 
-        <div style={{ height:1, background:'rgba(74,124,158,0.1)', marginBottom:'1.75rem' }} />
+        {/* ── Derecha: card ── */}
+        <div style={{ animation: 'fadeUp 0.5s ease 0.1s both' }}>
+          <div style={{
+            background: 'rgba(255,255,255,0.72)',
+            backdropFilter: 'blur(20px)',
+            borderRadius: 24,
+            border: '1.5px solid rgba(255,255,255,0.9)',
+            boxShadow: '0 16px 60px rgba(74,124,158,0.18)',
+            padding: 'clamp(1.75rem,4vw,2.5rem)',
+          }}>
 
-        {/* ── Form paciente ── */}
-        {rol === 'PACIENTE' && (
-          <>
-            <form onSubmit={handlePaciente} style={{ display:'flex', flexDirection:'column', gap:'1rem' }}>
-              <div>
-                <label style={labelStyle}>Carnet de Identidad</label>
-                <div style={{ position:'relative' }}>
-                  <IdIcon focused={focused} />
-                  <input
-                    type="text" className="li-input" value={ci}
-                    onChange={e => setCi(e.target.value)}
-                    onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-                    placeholder="Ej: 12345678" required
-                    style={inputStyle}
-                  />
-                </div>
-              </div>
-              <MensajeError texto={error} />
-              <BtnSubmit loading={loading} label="Continuar →" />
-            </form>
+            <p style={{ fontSize:'0.72rem', fontWeight:500, color:'#4a7c9e', letterSpacing:'0.14em', textTransform:'uppercase', margin:'0 0 0.5rem' }}>
+              Acceso al sistema
+            </p>
+            <h2 style={{ fontFamily:"'DM Serif Display',Georgia,serif", fontSize:'clamp(1.4rem,2.5vw,1.75rem)', fontWeight:400, color:'#1c3545', margin:'0 0 1.25rem' }}>
+              Iniciá sesión
+            </h2>
 
-            {/* Link a registro — va al formulario de inicio */}
-            <div style={{ textAlign:'center', marginTop:'1.25rem' }}>
-              <span style={{ fontSize:'0.82rem', color:'#7fa3b8' }}>¿Primera vez? </span>
-              <button
-                onClick={() => navigate('/')}
-                style={{
-                  background:'none', border:'none', padding:0, cursor:'pointer',
-                  fontSize:'0.82rem', color:'#4a7c9e', fontWeight:500,
-                  fontFamily:"'DM Sans',sans-serif", textDecoration:'underline',
-                  textUnderlineOffset:3,
-                }}
-              >
-                Registrate aquí
-              </button>
+            {/* Tabs × 3 */}
+            <div style={{ display:'flex', background:'rgba(74,124,158,0.08)', borderRadius:50, padding:4, marginBottom:'1.75rem', gap:4 }}>
+              {TABS.map(({ key, label }) => (
+                <button key={key} onClick={() => cambiarTab(key)} style={{
+                  flex:1, padding:'0.5rem 0.5rem', borderRadius:50, border:'none',
+                  background: tab === key ? '#4a7c9e' : 'transparent',
+                  color:      tab === key ? '#fff'    : '#4a7c9e',
+                  fontFamily: "'DM Sans',sans-serif",
+                  fontSize:'0.8rem', fontWeight: tab === key ? 600 : 400,
+                  cursor:'pointer', transition:'all 0.2s',
+                  boxShadow: tab === key ? '0 4px 14px rgba(74,124,158,0.25)' : 'none',
+                  whiteSpace: 'nowrap',
+                }}>
+                  {label}
+                </button>
+              ))}
             </div>
-          </>
-        )}
 
-        {/* ── Form médico ── */}
-        {rol === 'MEDICO' && (
-          <form onSubmit={handleMedico} style={{ display:'flex', flexDirection:'column', gap:'1rem' }}>
-            <div>
-              <label style={labelStyle}>ID de médico</label>
-              <div style={{ position:'relative' }}>
-                <MedicoIcon focused={focused} />
-                <input
-                  type="number" className="li-input" value={medicoId}
-                  onChange={e => setMedicoId(e.target.value)}
-                  onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-                  placeholder="Ej: 1" required min="1"
-                  style={inputStyle}
-                />
-              </div>
-              <p style={{ fontSize:'0.74rem', color:'#b0c8d4', marginTop:'0.4rem' }}>
-                Ingresá el ID numérico asignado por tu institución.
-              </p>
-            </div>
-            <MensajeError texto={error} />
-            <BtnSubmit loading={loading} label="Ingresar como médico →" />
-          </form>
-        )}
+            <div style={{ height:1, background:'rgba(74,124,158,0.1)', marginBottom:'1.5rem' }} />
 
-        <p style={{ fontSize:'0.72rem', color:'#b0c8d4', textAlign:'center', marginTop:'1.5rem', lineHeight:1.5 }}>
-          Sistema de gestión de turnos médicos
-        </p>
+            {/* ── TAB PACIENTE ── */}
+            {tab === 'PACIENTE' && (
+              <form onSubmit={handlePaciente} style={{ display:'flex', flexDirection:'column', gap:'1rem' }}>
+                <CampoInput label="Carnet de Identidad" name="ci" value={ci}
+                  onChange={e => { setCi(e.target.value); setError('') }}
+                  placeholder="Ej: 12345678" required />
+                {error && <ErrorMsg texto={error} />}
+                <BtnSubmit loading={loading} label="Continuar →" />
+                <p style={{ textAlign:'center', margin:'0.25rem 0 0', fontSize:'0.82rem', color:'#7fa3b8' }}>
+                  ¿Primera vez?{' '}
+                  <button onClick={() => navigate('/')} style={linkBtn}>Registrate aquí</button>
+                </p>
+              </form>
+            )}
+
+            {/* ── TAB MÉDICO ── */}
+            {tab === 'MEDICO' && (
+              <form onSubmit={handleMedico} style={{ display:'flex', flexDirection:'column', gap:'1rem' }}>
+                <CampoInput label="ID de médico" name="medicoId" type="number" value={medicoId}
+                  onChange={e => { setMedicoId(e.target.value); setError('') }}
+                  placeholder="Ej: 1" required />
+                <p style={{ fontSize:'0.74rem', color:'#b0c8d4', margin:'-0.5rem 0 0', paddingLeft:'0.25rem' }}>
+                  ID numérico asignado por tu institución.
+                </p>
+                {error && <ErrorMsg texto={error} />}
+                <BtnSubmit loading={loading} label="Ingresar como médico →" />
+              </form>
+            )}
+
+            {/* ── TAB PERSONAL ── */}
+            {tab === 'PERSONAL' && (
+              <form onSubmit={handlePersonal} style={{ display:'flex', flexDirection:'column', gap:'1rem' }}>
+                <CampoInput label="Correo institucional" name="email" type="email" value={email}
+                  onChange={e => { setEmail(e.target.value); setError('') }}
+                  placeholder="usuario@clinica.com" required />
+                <CampoInput label="Contraseña" name="password" type="password" value={password}
+                  onChange={e => { setPassword(e.target.value); setError('') }}
+                  placeholder="••••••••" required />
+                {error && <ErrorMsg texto={error} />}
+                <BtnSubmit loading={false} label="Ingresar →" />
+              </form>
+            )}
+
+          </div>
+        </div>
+
       </div>
     </div>
   )
 }
 
-// ── Estilos y sub-componentes ─────────────────────────────────────────────────
-
-const labelStyle = {
-  display:'block', fontSize:'0.75rem', fontWeight:500,
-  color:'#4a7c9e', letterSpacing:'0.08em', textTransform:'uppercase',
-  marginBottom:'0.5rem',
+const linkBtn = {
+  background:'none', border:'none', padding:0, cursor:'pointer',
+  fontSize:'0.82rem', color:'#4a7c9e', fontWeight:500,
+  fontFamily:"'DM Sans',sans-serif", textDecoration:'underline', textUnderlineOffset:3,
 }
 
-const inputStyle = {
-  width:'100%', padding:'0.9rem 1rem 0.9rem 2.8rem',
-  borderRadius:14, border:'1.5px solid rgba(255,255,255,0.8)',
-  background:'rgba(255,255,255,0.92)', fontSize:'0.95rem',
-  color:'#1c3545', fontFamily:"'DM Sans',sans-serif",
-  outline:'none', transition:'all 0.25s', boxSizing:'border-box',
-}
-
-function MensajeError({ texto }) {
-  if (!texto) return null
+function ErrorMsg({ texto }) {
   return (
-    <p style={{
-      fontSize:'0.82rem', color:'#dc2626', margin:0,
-      padding:'0.6rem 0.9rem', background:'rgba(239,68,68,0.06)',
-      borderRadius:10, border:'1px solid rgba(239,68,68,0.15)',
-    }}>⚠ {texto}</p>
+    <p style={{ fontSize:'0.82rem', color:'#dc2626', margin:0, padding:'0.65rem 1rem', background:'rgba(220,38,38,0.06)', border:'1.5px solid rgba(220,38,38,0.2)', borderRadius:12 }}>
+      ⚠ {texto}
+    </p>
   )
 }
 
@@ -233,33 +251,16 @@ function BtnSubmit({ loading, label }) {
   return (
     <button type="submit" disabled={loading} style={{
       width:'100%', padding:'0.9rem', borderRadius:50, border:'none',
-      background: loading ? 'rgba(74,124,158,0.5)' : 'linear-gradient(135deg,#4a7c9e,#3a6282)',
-      color:'white', fontSize:'0.9rem', fontWeight:500,
+      background: loading ? 'rgba(74,124,158,0.45)' : '#4a7c9e',
+      color:'white', fontSize:'0.88rem', fontWeight:500,
       cursor: loading ? 'not-allowed' : 'pointer',
       fontFamily:"'DM Sans',sans-serif", letterSpacing:'0.04em',
       transition:'all 0.22s', marginTop:'0.25rem',
-    }}>
+    }}
+      onMouseEnter={e => { if (!loading) e.currentTarget.style.background='#3a6282' }}
+      onMouseLeave={e => { if (!loading) e.currentTarget.style.background='#4a7c9e' }}
+    >
       {loading ? 'Verificando...' : label}
     </button>
-  )
-}
-
-function IdIcon({ focused }) {
-  return (
-    <svg style={{ position:'absolute', left:'1rem', top:'50%', transform:'translateY(-50%)', width:16, height:16, color: focused ? '#4a7c9e' : '#a8c4d4', transition:'color 0.2s', pointerEvents:'none' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <rect x="3" y="5" width="18" height="14" rx="2" strokeWidth="1.8"/>
-      <circle cx="9" cy="11" r="2" strokeWidth="1.8"/>
-      <path d="M13 9h4M13 13h4M7 17h10" strokeWidth="1.5" strokeLinecap="round"/>
-    </svg>
-  )
-}
-
-function MedicoIcon({ focused }) {
-  return (
-    <svg style={{ position:'absolute', left:'1rem', top:'50%', transform:'translateY(-50%)', width:16, height:16, color: focused ? '#4a7c9e' : '#a8c4d4', transition:'color 0.2s', pointerEvents:'none' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path d="M12 2a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z" strokeWidth="1.8"/>
-      <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" strokeWidth="1.8" strokeLinecap="round"/>
-      <path d="M17 13v4M15 15h4" strokeWidth="1.8" strokeLinecap="round"/>
-    </svg>
   )
 }

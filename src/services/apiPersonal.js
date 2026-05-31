@@ -4,7 +4,7 @@ import axios from 'axios'
 // Usar este cliente en secretariaService.js y adminService.js
 
 const apiPersonal = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8090',
 })
 
 apiPersonal.interceptors.request.use((config) => {
