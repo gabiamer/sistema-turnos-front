@@ -1,6 +1,6 @@
 // src/components/FormularioPaciente.jsx
-// Drop-in replacement — misma lógica, estética editorial pastel
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { pacienteService } from '../services/pacienteService'
 import CampoInput from './formulario/CampoInput'
 
@@ -8,9 +8,9 @@ const camposIniciales = { ci: '', nombre: '', apellido: '', fechaNacimiento: '',
 const erroresIniciales = { ci: '', email: '' }
 
 function FormularioPaciente({ onEnviar }) {
+  const navigate = useNavigate()
   const [form, setForm]               = useState(camposIniciales)
   const [errores, setErrores]         = useState(erroresIniciales)
-  const [enviado, setEnviado]         = useState(false)
   const [loading, setLoading]         = useState(false)
   const [errorServidor, setErrorServ] = useState('')
 
@@ -34,9 +34,14 @@ function FormularioPaciente({ onEnviar }) {
     if (!validar()) return
     setLoading(true); setErrorServ('')
     try {
-      await pacienteService.registrar(form)
-      setEnviado(true)
-      if (onEnviar) onEnviar(form)
+      const nuevo = await pacienteService.registrar(form)
+      // Guardar sesión con la respuesta real del servidor
+      const sesion = { rol: 'PACIENTE', nombre: nuevo.nombre, ...nuevo }
+      sessionStorage.setItem('sesion',   JSON.stringify(sesion))
+      sessionStorage.setItem('paciente', JSON.stringify(nuevo))
+      window.dispatchEvent(new Event('storage'))
+      if (onEnviar) onEnviar(nuevo)
+      navigate('/buscar')
     } catch (err) {
       if (err.response?.status === 409)        setErrorServ('Ya existe un paciente con ese CI.')
       else if (err.response?.data?.message)    setErrorServ(err.response.data.message)
@@ -44,42 +49,6 @@ function FormularioPaciente({ onEnviar }) {
     } finally { setLoading(false) }
   }
 
-  // ── Pantalla de éxito ──────────────────────────────────────────────────────
-  if (enviado) {
-    return (
-      <div style={estiloBase}>
-        <style>{fontImport}</style>
-        <div style={{
-          textAlign: 'center', padding: '2.5rem 1.5rem',
-          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem',
-        }}>
-          <div style={{
-            width: '56px', height: '56px', borderRadius: '50%',
-            backgroundColor: 'rgba(74,124,158,0.12)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '1.5rem',
-          }}>✓</div>
-          <h3 style={{
-            fontFamily: "'DM Serif Display', Georgia, serif",
-            fontSize: '1.3rem', fontWeight: '400', color: '#1c3545', margin: 0,
-          }}>
-            Datos registrados
-          </h3>
-          <p style={{ fontSize: '0.85rem', color: '#7fa3b8', margin: 0 }}>
-            {form.nombre} {form.apellido} — CI: {form.ci}
-          </p>
-          <button
-            onClick={() => { setForm(camposIniciales); setEnviado(false) }}
-            style={btnOutline}
-          >
-            Registrar otro paciente
-          </button>
-        </div>
-      </div>
-    )
-  }
-
-  // ── Formulario ─────────────────────────────────────────────────────────────
   return (
     <div style={estiloBase}>
       <style>{fontImport}</style>
@@ -104,7 +73,6 @@ function FormularioPaciente({ onEnviar }) {
         </div>
       )}
 
-      {/* Grid de campos */}
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         <CampoInput label="CI" name="ci" value={form.ci} onChange={handleChange} placeholder="Ej: 12345678" error={errores.ci} required />
 
@@ -120,7 +88,6 @@ function FormularioPaciente({ onEnviar }) {
           <CampoInput label="Email" name="email" value={form.email} onChange={handleChange} placeholder="pedro@mail.com" type="email" error={errores.email} />
         </div>
 
-        {/* Separador */}
         <div style={{ height: '1px', backgroundColor: 'rgba(74,124,158,0.1)', margin: '0.5rem 0' }} />
 
         <button
@@ -132,8 +99,25 @@ function FormularioPaciente({ onEnviar }) {
             cursor: loading ? 'not-allowed' : 'pointer',
           }}
         >
-          {loading ? 'Guardando...' : 'Guardar datos'}
+          {loading ? 'Guardando...' : 'Registrarse'}
         </button>
+
+        {/* Link a login para quienes ya tienen cuenta */}
+        <p style={{ textAlign: 'center', fontSize: '0.82rem', color: '#7fa3b8', margin: '0.25rem 0 0' }}>
+          ¿Ya tenés cuenta?{' '}
+          <button
+            type="button"
+            onClick={() => navigate('/login')}
+            style={{
+              background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+              fontSize: '0.82rem', color: '#4a7c9e', fontWeight: 500,
+              fontFamily: "'DM Sans',sans-serif", textDecoration: 'underline',
+              textUnderlineOffset: 3,
+            }}
+          >
+            Iniciá sesión aquí
+          </button>
+        </p>
       </form>
     </div>
   )
@@ -176,15 +160,6 @@ const btnPrimario = {
   color: 'white', fontSize: '0.88rem', fontWeight: '500',
   fontFamily: "'DM Sans', sans-serif",
   letterSpacing: '0.04em', transition: 'all 0.2s',
-}
-
-const btnOutline = {
-  padding: '0.65rem 1.5rem',
-  borderRadius: '50px',
-  border: '1.5px solid #4a7c9e',
-  background: 'transparent', color: '#4a7c9e',
-  fontSize: '0.82rem', fontWeight: '500',
-  cursor: 'pointer', fontFamily: "'DM Sans', sans-serif",
 }
 
 export default FormularioPaciente

@@ -1,18 +1,9 @@
 // src/pages/Inicio.jsx
-// Drop-in replacement — misma lógica (sessionStorage + navigate), estética editorial pastel
-import { useNavigate } from 'react-router-dom'
 import FormularioPaciente from '../components/FormularioPaciente'
 
 const fontImport = `@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap');`
 
 function Inicio() {
-  const navigate = useNavigate()
-
-  function handlePacienteRegistrado(paciente) {
-    sessionStorage.setItem('paciente', JSON.stringify(paciente))
-    navigate('/mis-turnos')
-  }
-
   return (
     <div style={{
       minHeight: '100vh',
@@ -69,7 +60,6 @@ function Inicio() {
             Regístrate una sola vez y reserva turnos con los mejores especialistas de forma rápida y sencilla.
           </p>
 
-          {/* Stats decorativos */}
           <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
             {[
               { num: '6+', label: 'Especialidades' },
@@ -92,7 +82,7 @@ function Inicio() {
 
         {/* ── Columna derecha: formulario ───────────────────────────────── */}
         <div style={{ animation: 'fadeUp 0.5s ease 0.1s both' }}>
-          <FormularioPaciente onEnviar={handlePacienteRegistrado} />
+          <FormularioPaciente />
         </div>
       </div>
     </div>
