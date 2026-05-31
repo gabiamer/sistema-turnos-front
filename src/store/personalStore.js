@@ -12,10 +12,14 @@ export const personalStore = {
 
   login: (personal) => {
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(personal))
+    // Patrón Observer: notifica a los suscriptores de la misma pestaña
+    // (el evento 'storage' nativo solo se dispara entre pestañas distintas)
+    window.dispatchEvent(new Event('storage'))
   },
 
   logout: () => {
     sessionStorage.removeItem(STORAGE_KEY)
+    window.dispatchEvent(new Event('storage'))
   },
 
   isLoggedIn: () => !!getStored(),
