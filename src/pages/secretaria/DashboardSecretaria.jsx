@@ -1,9 +1,10 @@
-// src/pages/secretaria/DashboardSecretaria.jsx — Luciana S5
+// src/pages/secretaria/DashboardSecretaria.jsx — Luciana S5 + Adriana S5 (modal agendar)
 import { useState, useEffect, useCallback } from 'react'
-import { secretariaService } from '../../services/secretariaService'
-import { personalStore }      from '../../store/personalStore'
-import BuscadorPaciente        from '../../components/secretaria/BuscadorPaciente'
-import ModalCancelarSecretaria from '../../components/secretaria/ModalCancelarSecretaria'
+import { secretariaService }       from '../../services/secretariaService'
+import { personalStore }           from '../../store/personalStore'
+import BuscadorPaciente            from '../../components/secretaria/BuscadorPaciente'
+import ModalCancelarSecretaria     from '../../components/secretaria/ModalCancelarSecretaria'
+import ModalAgendarSecretaria      from './ModalAgendarSecretaria'
 
 const ESTADO_COLOR = {
   CONFIRMADO: { bg: '#f0fdf4', border: '#86efac', text: '#16a34a' },
@@ -15,11 +16,15 @@ const ESTADO_COLOR = {
 export default function DashboardSecretaria() {
   const personal = personalStore.get()
 
-  const [turnosHoy, setTurnosHoy]       = useState([])
-  const [loadingTabla, setLoadingTabla] = useState(true)
-  const [errorTabla, setErrorTabla]     = useState('')
+  const [turnosHoy, setTurnosHoy]           = useState([])
+  const [loadingTabla, setLoadingTabla]     = useState(true)
+  const [errorTabla, setErrorTabla]         = useState('')
   const [turnoACancelar, setTurnoACancelar] = useState(null)
-  const [toast, setToast] = useState(null)
+  const [toast, setToast]                   = useState(null)
+
+  // ── modal agendar (Adriana) ───────────────────────────────────────────────
+  const [pacienteAgendar, setPacienteAgendar] = useState(null)  // null = cerrado
+  // ──────────────────────────────────────────────────────────────────────────
 
   const cargarTurnos = useCallback(() => {
     setLoadingTabla(true)
@@ -40,6 +45,11 @@ export default function DashboardSecretaria() {
   function handleCanceladoOk() {
     cargarTurnos()
     mostrarToast('Turno cancelado.')
+  }
+
+  function handleAgendado(resultado) {
+    cargarTurnos()
+    mostrarToast(`Turno #${resultado.turnoId} confirmado correctamente ✓`)
   }
 
   return (
@@ -81,7 +91,7 @@ export default function DashboardSecretaria() {
           Buscar paciente
         </h2>
         <BuscadorPaciente
-          onAgendar={() => mostrarToast('Modal de agendado pendiente (Adriana).', 'info')}
+          onAgendar={(paciente) => setPacienteAgendar(paciente)}
           onRegistrar={() => mostrarToast('Usá el formulario de registro de pacientes.', 'info')}
         />
       </section>
@@ -175,7 +185,7 @@ export default function DashboardSecretaria() {
         )}
       </section>
 
-      {/* Modal cancelar */}
+      {/* Modal cancelar (Luciana) */}
       {turnoACancelar && (
         <ModalCancelarSecretaria
           turno={turnoACancelar}
@@ -183,6 +193,16 @@ export default function DashboardSecretaria() {
           onCancelado={handleCanceladoOk}
         />
       )}
+
+      {/* Modal agendar (Adriana) */}
+      {pacienteAgendar && (
+        <ModalAgendarSecretaria
+          pacienteInicial={pacienteAgendar}
+          onClose={() => setPacienteAgendar(null)}
+          onAgendado={handleAgendado}
+        />
+      )}
+
     </div>
   )
 }
