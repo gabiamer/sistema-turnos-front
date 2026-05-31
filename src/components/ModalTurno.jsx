@@ -1,14 +1,15 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { turnoService } from '../services/turnoService'
-import { pacienteService } from '../services/pacienteService'
+import { turnoRepository }   from '../repositories/turnoRepository'
+import { pacienteRepository } from '../repositories/pacienteRepository'
+import { BOOKING_STATES, BOOKING_STATE_META, transicionar } from '../domain/turno-booking/BookingStates'
 
 const DURACION_BLOQUEO = 5 * 60
 const fontImport = `@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap');`
 
 function ModalTurno({ slot, medico, onCerrar }) {
   const navigate = useNavigate()
-  const [fase, setFase]                    = useState('identificacion')
+  const [fase, setFase]                    = useState(BOOKING_STATES.IDENTIFICACION)
   const [segundosRestantes, setSegundos]   = useState(DURACION_BLOQUEO)
   const [turnoId, setTurnoId]              = useState(null)
   const [mensajeError, setMensajeError]    = useState('')
@@ -21,10 +22,14 @@ function ModalTurno({ slot, medico, onCerrar }) {
   const [paciente, setPaciente]   = useState(null)
 
   useEffect(() => {
-    if (fase !== 'bloqueando') return
+    if (fase !== BOOKING_STATES.BLOQUEANDO) return
     intervaloRef.current = setInterval(() => {
       setSegundos(prev => {
-        if (prev <= 1) { clearInterval(intervaloRef.current); setFase('expirado'); return 0 }
+        if (prev <= 1) {
+          clearInterval(intervaloRef.current)
+          setFase(transicionar(BOOKING_STATES.BLOQUEANDO, BOOKING_STATES.EXPIRADO))
+          return 0
+        }
         return prev - 1
       })
     }, 1000)
@@ -37,9 +42,9 @@ function ModalTurno({ slot, medico, onCerrar }) {
     if (!ci.trim()) { setErrorCi('Ingresa tu CI para continuar.'); return }
     setLoadingCi(true); setErrorCi('')
     try {
-      const data = await pacienteService.buscarPorCi(ci.trim())
+      const data = await pacienteRepository.buscarPorCi(ci.trim())
       setPaciente(data)
-      setFase('resumen')
+      setFase(transicionar(BOOKING_STATES.IDENTIFICACION, BOOKING_STATES.RESUMEN))
     } catch (err) {
       if (err.response?.status === 404) setErrorCi('No encontramos ese CI. Verifica o regístrate primero.')
       else setErrorCi('Error al buscar el paciente. Intenta de nuevo.')
@@ -47,16 +52,17 @@ function ModalTurno({ slot, medico, onCerrar }) {
   }
 
   async function handleSolicitar() {
-    setFase('bloqueando'); setMensajeError('')
+    setFase(transicionar(BOOKING_STATES.RESUMEN, BOOKING_STATES.BLOQUEANDO))
+    setMensajeError('')
     try {
-      const data = await turnoService.solicitar(paciente.id, medico.id, slot.fecha, slot.hora)
+      const data = await turnoRepository.solicitar(paciente.id, medico.id, slot.fecha, slot.hora)
       setTurnoId(data.turnoId)
     } catch (err) {
       clearInterval(intervaloRef.current)
       if (err.response?.status === 409)      setMensajeError('Este turno ya fue tomado por otro paciente.')
       else if (err.response?.status === 422) setMensajeError('Ya tienes un turno reservado para ese día.')
       else                                   setMensajeError('No se pudo reservar el turno. Intenta de nuevo.')
-      setFase('error')
+      setFase(transicionar(BOOKING_STATES.BLOQUEANDO, BOOKING_STATES.ERROR))
     }
   }
 
@@ -64,12 +70,18 @@ function ModalTurno({ slot, medico, onCerrar }) {
     if (!turnoId) return
     setLoadingConf(true); clearInterval(intervaloRef.current)
     try {
-      await turnoService.confirmar(turnoId)
+      await turnoRepository.confirmar(turnoId)
       navigate('/paciente/turnos')
     } catch (err) {
-      if (err.response?.status === 410)      setFase('expirado')
-      else if (err.response?.status === 409) { setMensajeError('Este turno ya fue tomado.'); setFase('error') }
-      else                                   { setMensajeError('Error al confirmar. Intenta de nuevo.'); setFase('error') }
+      if (err.response?.status === 410)
+        setFase(transicionar(BOOKING_STATES.BLOQUEANDO, BOOKING_STATES.EXPIRADO))
+      else if (err.response?.status === 409) {
+        setMensajeError('Este turno ya fue tomado.')
+        setFase(transicionar(BOOKING_STATES.BLOQUEANDO, BOOKING_STATES.ERROR))
+      } else {
+        setMensajeError('Error al confirmar. Intenta de nuevo.')
+        setFase(transicionar(BOOKING_STATES.BLOQUEANDO, BOOKING_STATES.ERROR))
+      }
     } finally { setLoadingConf(false) }
   }
 
@@ -94,14 +106,14 @@ function ModalTurno({ slot, medico, onCerrar }) {
           <div>
             <p style={{ fontSize:'0.7rem', fontWeight:'500', color:'#4a7c9e', letterSpacing:'0.12em', textTransform:'uppercase', margin:'0 0 0.3rem' }}>Reserva de turno</p>
             <h2 style={{ fontFamily:"'DM Serif Display',Georgia,serif", fontSize:'1.25rem', fontWeight:'400', color:'#1c3545', margin:0 }}>
-              {fase === 'identificacion' ? 'Identifícate' : 'Confirma tu cita'}
+              {BOOKING_STATE_META[fase]?.titulo}
             </h2>
           </div>
           <button onClick={onCerrar} style={{ background:'rgba(74,124,158,0.1)', border:'none', borderRadius:'10px', width:'32px', height:'32px', cursor:'pointer', color:'#4a7c9e', fontSize:'0.9rem', display:'flex', alignItems:'center', justifyContent:'center' }}>✕</button>
         </div>
 
         {/* Resumen del turno (todas las fases menos identificacion) */}
-        {fase !== 'identificacion' && (
+        {fase !== BOOKING_STATES.IDENTIFICACION && (
           <div style={{ backgroundColor:'rgba(74,124,158,0.06)', border:'1.5px solid rgba(74,124,158,0.15)', borderRadius:'16px', padding:'1.25rem', marginBottom:'1.5rem', display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.85rem' }}>
             <InfoItem label="Médico"       value={`Dr. ${medico.nombre} ${medico.apellido}`} full />
             <InfoItem label="Especialidad" value={medico.especialidad} />
@@ -112,7 +124,7 @@ function ModalTurno({ slot, medico, onCerrar }) {
         )}
 
         {/* ── FASE: identificacion ── */}
-        {fase === 'identificacion' && (
+        {fase === BOOKING_STATES.IDENTIFICACION && (
           <>
             <div style={{ backgroundColor:'rgba(74,124,158,0.06)', border:'1.5px solid rgba(74,124,158,0.15)', borderRadius:'16px', padding:'1rem 1.25rem', marginBottom:'1.5rem' }}>
               <InfoItem label="Médico" value={`Dr. ${medico.nombre} ${medico.apellido}`} />
@@ -148,7 +160,7 @@ function ModalTurno({ slot, medico, onCerrar }) {
         )}
 
         {/* ── FASE: resumen ── */}
-        {fase === 'resumen' && (
+        {fase === BOOKING_STATES.RESUMEN && (
           <>
             <p style={{ fontSize:'0.82rem', color:'#7fa3b8', marginBottom:'1.25rem', lineHeight:1.6 }}>
               Al confirmar, se reservará el turno por <strong style={{ color:'#4a7c9e' }}>5 minutos</strong> mientras completás la reserva.
@@ -161,7 +173,7 @@ function ModalTurno({ slot, medico, onCerrar }) {
         )}
 
         {/* ── FASE: bloqueando ── */}
-        {fase === 'bloqueando' && (
+        {fase === BOOKING_STATES.BLOQUEANDO && (
           <>
             <p style={{ fontSize:'0.82rem', color:'#7fa3b8', marginBottom:'1rem', lineHeight:1.6 }}>Turno reservado temporalmente. Confirmalo antes de que expire.</p>
             <div style={{ backgroundColor:'rgba(74,124,158,0.1)', borderRadius:'99px', height:'6px', marginBottom:'0.75rem', overflow:'hidden' }}>
@@ -177,18 +189,18 @@ function ModalTurno({ slot, medico, onCerrar }) {
         )}
 
         {/* ── FASE: expirado ── */}
-        {fase === 'expirado' && (
+        {fase === BOOKING_STATES.EXPIRADO && (
           <>
             <div style={alertaBox('#c9a96e','rgba(201,169,110,0.08)','rgba(201,169,110,0.2)')}>⏱ Bloqueo expirado. El turno volvió a estar disponible.</div>
             <div style={{ display:'flex', gap:'0.75rem', marginTop:'1rem' }}>
               <button onClick={onCerrar} style={btnOutline}>Cerrar</button>
-              <button onClick={() => { setFase('resumen'); setSegundos(DURACION_BLOQUEO) }} style={btnFill}>Intentar de nuevo</button>
+              <button onClick={() => { setFase(transicionar(BOOKING_STATES.EXPIRADO, BOOKING_STATES.RESUMEN)); setSegundos(DURACION_BLOQUEO) }} style={btnFill}>Intentar de nuevo</button>
             </div>
           </>
         )}
 
         {/* ── FASE: error ── */}
-        {fase === 'error' && (
+        {fase === BOOKING_STATES.ERROR && (
           <>
             <div style={alertaBox('#dc2626','rgba(220,38,38,0.06)','rgba(220,38,38,0.18)')}>{mensajeError}</div>
             <button onClick={onCerrar} style={{ ...btnOutline, width:'100%', marginTop:'1rem' }}>Cerrar</button>

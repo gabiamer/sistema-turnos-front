@@ -1,6 +1,6 @@
 // src/pages/admin/DashboardAdmin.jsx
 import { useState, useEffect, useCallback } from 'react'
-import { adminService }    from '../../services/adminService'
+import { adminFacade }     from '../../facades/adminFacade'
 import SelectorPeriodo     from '../../components/admin/SelectorPeriodo'
 import TablaReporte        from '../../components/admin/TablaReporte'
 import GraficoOcupacion   from '../../components/admin/GraficoOcupacion'
@@ -40,7 +40,7 @@ export default function DashboardAdmin() {
   const [kpiVisible, setKpiVisible]           = useState(false)
 
   useEffect(() => {
-    adminService.getKpis()
+    adminFacade.cargarKpis()
       .then(data => { setKpis(data); setTimeout(() => setKpiVisible(true), 80) })
       .catch(() => { setKpis(null); setKpiVisible(true) })
       .finally(() => setCargandoKpis(false))
@@ -50,8 +50,8 @@ export default function DashboardAdmin() {
     if (!periodo) return
     setCargandoReporte(true); setErrorReporte('')
     try {
-      const data = await adminService.getReporte(tipoReporte, periodo.inicio, periodo.fin)
-      setFilas(normalizarFilas(tipoReporte, data))
+      const filas = await adminFacade.cargarReporte(tipoReporte, periodo.inicio, periodo.fin)
+      setFilas(filas)
     } catch (err) {
       setErrorReporte(err.response?.data?.error ?? 'Error al cargar el reporte')
       setFilas([])
@@ -289,7 +289,7 @@ export default function DashboardAdmin() {
                 headers={HEADERS_MAP[tipoReporte]}
                 rows={filas}
                 cargando={cargandoReporte}
-                onExportar={() => adminService.exportarCSV(tipoReporte, periodo.inicio, periodo.fin)}
+                onExportar={() => adminFacade.exportar(tipoReporte, periodo.inicio, periodo.fin)}
               />
             )}
           </div>
@@ -312,15 +312,3 @@ function SectionLabel({ texto }) {
   )
 }
 
-function normalizarFilas(tipo, data) {
-  if (!Array.isArray(data)) return []
-  return data.map(item => {
-    switch (tipo) {
-      case 'ocupacion':      return { 'Médico': item.nombreMedico, 'Especialidad': item.especialidad, 'Total Slots': item.totalSlots, 'Ocupados': item.ocupados, '% Ocupación': item.porcentaje?.toFixed(1) + '%' }
-      case 'ausentismo':     return { 'ID': item.turnoId, 'Fecha': item.fecha, 'Médico': item.nombreMedico, 'Especialidad': item.especialidad }
-      case 'especialidades': return { 'Especialidad': item.especialidad, 'Total Turnos': item.totalTurnos }
-      case 'cancelaciones':  return { 'ID': item.turnoId, 'Fecha': item.fecha, 'Especialidad': item.especialidad, 'Paciente': item.pacienteAnonimizado, 'Motivo': item.motivo }
-      default:               return item
-    }
-  })
-}

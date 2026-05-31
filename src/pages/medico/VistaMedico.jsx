@@ -1,5 +1,4 @@
 // src/pages/medico/VistaMedico.jsx
-// Lee el medicoId de sessionStorage['sesion'] en vez de hardcodearlo.
 
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate }       from 'react-router-dom'
@@ -10,8 +9,8 @@ import PanelCita             from '../../components/medico/PanelCita'
 import ModalReprogramar      from '../../components/medico/ModalReprogramar'
 import ModalCancelar         from '../../components/medico/ModalCancelar'
 import Toast                 from '../../components/medico/Toast'
-import { medicoService }     from '../../services/medicoService'
-import { turnoService }      from '../../services/turnoService'
+import { medicoRepository }  from '../../repositories/medicoRepository'
+import { turnoRepository }   from '../../repositories/turnoRepository'
 import { getLunes, toISO } from '../../utils/fecha'
 import { Spinner, BannerError } from '../../components/medico/Spinner'
 import { personalStore } from '../../store/personalStore'
@@ -36,7 +35,7 @@ export default function VistaMedico() {
   // Guardia: si no hay sesión de médico, redirigir
   useEffect(() => {
     if (!medicoId) { navigate('/login', { replace: true }); return }
-    medicoService.getById(medicoId)
+    medicoRepository.getById(medicoId)
       .then(setMedico)
       .catch(() => setError('No se pudo cargar el perfil del médico.'))
   }, [medicoId, navigate, setError])
@@ -44,8 +43,8 @@ export default function VistaMedico() {
   const cargarAgenda = useCallback(() => {
     if (!medico) return
     setLoading(true); setError(null)
-    medicoService.getAgendaSemana(medico.id, toISO(semanaBase))
-      .then(data => setSlots(Array.isArray(data) ? data : []))
+    medicoRepository.getAgendaSemana(medico.id, toISO(semanaBase))
+      .then(slots => setSlots(slots))
       .catch(() => setError('No se pudo cargar la agenda.'))
       .finally(() => setLoading(false))
   }, [medico, semanaBase, setSlots, setLoading, setError])
@@ -57,7 +56,7 @@ export default function VistaMedico() {
   async function handleConcluir(turnoId) {
     setLoadingAccion(true)
     try {
-      await turnoService.patchEstado(turnoId, 'CONCLUIDA')
+      await turnoRepository.actualizarEstado(turnoId, 'CONCLUIDA')
       actualizarEstadoTurno(turnoId, 'CONCLUIDA')
       cerrarPanel()
       mostrarToast('Cita marcada como concluida ✓')
@@ -75,7 +74,7 @@ export default function VistaMedico() {
     if (!citaSeleccionada) return
     setLoadingAccion(true); setErrorAccion(null)
     try {
-      await turnoService.putReprogramar(citaSeleccionada.turno.id, nuevaFecha, nuevaHora)
+      await turnoRepository.reprogramar(citaSeleccionada.turno.id, nuevaFecha, nuevaHora)
       reprogramarTurno(citaSeleccionada.turno.id, nuevaFecha, nuevaHora)
       cerrarModal()
       mostrarToast(`Cita reprogramada: ${nuevaFecha} ${nuevaHora} ↗`)
@@ -92,7 +91,7 @@ export default function VistaMedico() {
     if (!citaSeleccionada) return
     setLoadingAccion(true); setErrorAccion(null)
     try {
-      await turnoService.cancelarMedico(citaSeleccionada.turno.id, motivo, canales)
+      await turnoRepository.cancelarComoMedico(citaSeleccionada.turno.id, motivo, canales)
       liberarSlot(citaSeleccionada.turno.id)
       cerrarModal()
       mostrarToast(`Cita cancelada. Notificación enviada vía ${canales.join(', ')} 🔔`)

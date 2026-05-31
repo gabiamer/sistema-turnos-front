@@ -44,10 +44,11 @@ export default function Navbar() {
       setSesion(getSesion())
       setPersonal(getPersonal())
     }
+    // Patrón Observer: escucha el evento 'storage'.
+    // LoginPage y personalStore.login/logout lo disparan explícitamente en la
+    // misma pestaña; el navegador lo dispara de forma nativa entre pestañas.
     window.addEventListener('storage', sync)
-    // También sincroniza cuando cambia sessionStorage en la misma pestaña
-    const interval = setInterval(sync, 500)
-    return () => { window.removeEventListener('storage', sync); clearInterval(interval) }
+    return () => window.removeEventListener('storage', sync)
   }, [])
 
   // Personal interno tiene prioridad sobre sesión de paciente

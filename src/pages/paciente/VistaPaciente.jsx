@@ -3,7 +3,7 @@
 // Lee pacienteId de sessionStorage (guardado en LoginPage tras buscar por CI).
 
 import { useState, useEffect, useCallback } from 'react'
-import { turnoService }    from '../../services/turnoService'
+import { turnoRepository } from '../../repositories/turnoRepository'
 import { getEstiloEstado } from '../../utils/mapEstado'
 import Toast               from '../../components/medico/Toast'
 import { Spinner, BannerError } from '../../components/medico/Spinner'
@@ -34,8 +34,8 @@ export default function VistaPaciente() {
   const cargarTurnos = useCallback(() => {
     if (!paciente?.id) return
     setLoading(true); setError('')
-    turnoService.listar(paciente.id)
-      .then(data => setTurnos(Array.isArray(data) ? data : []))
+    turnoRepository.listarPorPaciente(paciente.id)
+      .then(data => setTurnos(data))
       .catch(() => setError('No se pudieron cargar los turnos. Verifica tu conexión e intenta de nuevo.'))
       .finally(() => setLoading(false))
   }, [paciente])
@@ -47,7 +47,7 @@ export default function VistaPaciente() {
     if (!cancelando.motivo.trim()) { setErrorCancel('El motivo es requerido.'); return }
     setLoadingCancel(true); setErrorCancel('')
     try {
-      await turnoService.cancelar(cancelando.turnoId, paciente.id, cancelando.motivo)
+      await turnoRepository.cancelarComoPaciente(cancelando.turnoId, paciente.id, cancelando.motivo)
       setTurnos(prev => prev.map(t =>
         t.id === cancelando.turnoId
           ? { ...t, estado: 'CANCELADO', motivoCancelacion: cancelando.motivo }

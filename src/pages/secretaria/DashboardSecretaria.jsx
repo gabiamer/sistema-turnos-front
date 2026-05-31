@@ -1,6 +1,6 @@
 // src/pages/secretaria/DashboardSecretaria.jsx
 import { useState, useEffect, useCallback } from 'react'
-import { secretariaService }       from '../../services/secretariaService'
+import { secretariaFacade }        from '../../facades/secretariaFacade'
 import { personalStore }           from '../../store/personalStore'
 import BuscadorPaciente            from '../../components/secretaria/BuscadorPaciente'
 import ModalCancelarSecretaria     from '../../components/secretaria/ModalCancelarSecretaria'
@@ -32,12 +32,13 @@ export default function DashboardSecretaria() {
   const [turnoACancelar, setTurnoACancelar] = useState(null)
   const [toast, setToast]                   = useState(null)
   const [pacienteAgendar, setPacienteAgendar] = useState(null)
+  const [kpis, setKpis]                     = useState({ total: 0, confirmados: 0, pendientes: 0 })
 
   const cargarTurnos = useCallback(() => {
     setLoadingTabla(true)
     setErrorTabla('')
-    secretariaService.getTurnosHoy()
-      .then(data => setTurnosHoy(Array.isArray(data) ? data : []))
+    secretariaFacade.cargarAgendaHoy()
+      .then(({ turnos, kpis: k }) => { setTurnosHoy(turnos); setKpis(k) })
       .catch(() => setErrorTabla('No se pudieron cargar los turnos del día.'))
       .finally(() => setLoadingTabla(false))
   }, [])
@@ -52,9 +53,6 @@ export default function DashboardSecretaria() {
   const nombre = personal?.nombre?.split(' ')[0] ?? 'Secretaria'
   const fecha = new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })
   const fechaCap = fecha.charAt(0).toUpperCase() + fecha.slice(1)
-
-  const confirmados = turnosHoy.filter(t => t.estado === 'CONFIRMADO').length
-  const pendientes  = turnosHoy.filter(t => t.estado === 'PENDIENTE').length
 
   return (
     <div style={{ minHeight: '100vh', background: '#dce8f0', fontFamily: FONT }}>
@@ -107,9 +105,9 @@ export default function DashboardSecretaria() {
         {!loadingTabla && turnosHoy.length > 0 && (
           <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.75rem', animation: 'fadeUp 0.4s ease 0.05s both' }}>
             {[
-              { label: 'Total hoy', val: turnosHoy.length, accent: '#3a6a9e' },
-              { label: 'Confirmados', val: confirmados, accent: '#0d7a4f' },
-              { label: 'Pendientes', val: pendientes, accent: '#a06010' },
+              { label: 'Total hoy',   val: kpis.total,       accent: '#3a6a9e' },
+              { label: 'Confirmados', val: kpis.confirmados, accent: '#0d7a4f' },
+              { label: 'Pendientes',  val: kpis.pendientes,  accent: '#a06010' },
             ].map(k => (
               <div key={k.label} style={{
                 flex: 1, padding: '0.9rem 1.1rem',
