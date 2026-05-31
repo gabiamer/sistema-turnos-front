@@ -45,7 +45,7 @@ export default function CalendarioPage() {
 
     disponibilidadService.getSlots(medico.id, semanaOffset)
       .then(data => { if (!cancelado) setSlots(Array.isArray(data) ? data : []) })
-      .catch(() => { if (!cancelado) setError('No se pudo cargar la disponibilidad. Intentá de nuevo.') })
+      .catch(() => { if (!cancelado) setError('No se pudo cargar la disponibilidad. Intenta de nuevo.') })
       .finally(() => { if (!cancelado) setLoading(false) })
 
     return () => { cancelado = true }
@@ -88,7 +88,7 @@ export default function CalendarioPage() {
       {/* PASO 1: ESPECIALIDAD */}
       {paso === PASOS.ESPECIALIDAD && (
         <div className="cal-seccion">
-          <h2 className="cal-page-title">¿Qué especialidad buscás?</h2>
+          <h2 className="cal-page-title">¿Qué especialidad buscas?</h2>
           {cargandoMedicos ? (
             <div className="cal-spinner-wrap">
               <div className="cal-spinner" />
@@ -163,7 +163,12 @@ export default function CalendarioPage() {
           {!loading && !error && (
             <>
               <div className="cal-nav">
-                <button className="cal-btn" onClick={() => setSemanaOffset(o => o - 1)}>
+                <button
+                  className="cal-btn"
+                  onClick={() => setSemanaOffset(o => o - 1)}
+                  disabled={semanaOffset <= 0}
+                  style={{ opacity: semanaOffset <= 0 ? 0.4 : 1, cursor: semanaOffset <= 0 ? 'not-allowed' : 'pointer' }}
+                >
                   ← Anterior
                 </button>
                 <span className="cal-semana-label">

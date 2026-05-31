@@ -20,7 +20,7 @@ export default function ModalCancelar({ turno, onConfirmar, onCerrar, cargando, 
 
   function handleConfirmar() {
     if (!motivo.trim()) { setValidacion('El motivo es requerido.'); return }
-    if (canales.length === 0) { setValidacion('Seleccioná al menos un canal.'); return }
+    if (canales.length === 0) { setValidacion('Selecciona al menos un canal.'); return }
     setValidacion('')
     onConfirmar(motivo.trim(), canales)
   }

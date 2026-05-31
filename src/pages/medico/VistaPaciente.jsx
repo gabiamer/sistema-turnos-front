@@ -36,7 +36,7 @@ export default function VistaPaciente() {
     setLoading(true); setError('')
     turnoService.listar(paciente.id)
       .then(data => setTurnos(Array.isArray(data) ? data : []))
-      .catch(() => setError('No se pudieron cargar los turnos. Verificá tu conexión e intentá de nuevo.'))
+      .catch(() => setError('No se pudieron cargar los turnos. Verifica tu conexión e intenta de nuevo.'))
       .finally(() => setLoading(false))
   }, [paciente])
 

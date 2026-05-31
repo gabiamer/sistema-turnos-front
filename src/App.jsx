@@ -4,6 +4,7 @@ import './App.css'
 import './index.css'
 
 import LoginPage         from './pages/auth/LoginPage'
+import LoginPersonal     from './pages/auth/LoginPersonal'
 import GestionAgendaPage from './pages/agenda/GestionAgendaPage'
 import VistaMedico       from './pages/medico/VistaMedico'
 import VistaPaciente     from './pages/medico/VistaPaciente'
