@@ -74,9 +74,9 @@ export default function Navbar() {
   // Badge visual por rol
   const rolBadge = {
     MEDICO:         { label: '⚕ Médico',      color: '#4a7c9e', bg: 'rgba(74,124,158,0.1)',   border: 'rgba(74,124,158,0.25)' },
-    PACIENTE:       { label: '👤 Paciente',    color: '#16a34a', bg: 'rgba(34,197,94,0.1)',    border: 'rgba(34,197,94,0.25)'  },
-    SECRETARIA:     { label: '📋 Secretaría',  color: '#b45309', bg: 'rgba(180,83,9,0.08)',    border: 'rgba(180,83,9,0.25)'   },
-    ADMINISTRATIVO: { label: '📊 Admin',       color: '#7c3aed', bg: 'rgba(124,58,237,0.08)',  border: 'rgba(124,58,237,0.25)' },
+    PACIENTE:       { label: ' Paciente',    color: '#16a34a', bg: 'rgba(34,197,94,0.1)',    border: 'rgba(34,197,94,0.25)'  },
+    SECRETARIA:     { label: ' Secretaría',  color: '#b45309', bg: 'rgba(180,83,9,0.08)',    border: 'rgba(180,83,9,0.25)'   },
+    ADMINISTRATIVO: { label: ' Admin',       color: '#7c3aed', bg: 'rgba(124,58,237,0.08)',  border: 'rgba(124,58,237,0.25)' },
   }[rol] ?? null
 
   const logoHref =
