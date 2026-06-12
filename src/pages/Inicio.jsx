@@ -48,8 +48,8 @@ function Inicio() {
             lineHeight: 1.1, letterSpacing: '-0.02em',
             margin: '0 0 1.5rem',
           }}>
-            Tu salud --,<br />
-            <em style={{ fontStyle: 'italic', color: '#4a7c9e' }}>sin esperas</em><br />
+            Tu salud Adriana--,<br />
+            <em style={{ fontStyle: 'italic', color: '#4a7c9e' }}>sin adriana esperas</em><br />
             innecesarias.
           </h1>
 
