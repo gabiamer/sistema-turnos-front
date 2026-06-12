@@ -21,7 +21,9 @@ jobs:
       - name: Build & push frontend image
         run: |
           IMAGE=${{ secrets.ACR_LOGIN_SERVER }}/turnos-frontend
-          docker build -t $IMAGE:${{ github.sha }} -t $IMAGE:latest .
+          docker build \
+            --build-arg VITE_API_URL=https://turnos-backend.salmonbeach-c6552686.eastus.azurecontainerapps.io \
+            -t $IMAGE:${{ github.sha }} -t $IMAGE:latest .
           docker push $IMAGE:${{ github.sha }}
           docker push $IMAGE:latest
 
